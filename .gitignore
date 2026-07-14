@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.env
+venv/
+env/
+
+# Node
+node_modules/
+.pnp
+.pnp.js
+dist/
+*.local
+
+# ML Models & Dataset
+models/*.h5
+models/*.tflite
+models/*.pb
+dataset/
+*.hdf5
+*.ckpt*
+*.npy
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Testing
+coverage/
+.pytest_cache/
+htmlcov/
+
+# Build
+frontend/dist/
+*.pyc
