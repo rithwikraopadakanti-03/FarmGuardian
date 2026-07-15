@@ -23,7 +23,7 @@ from pathlib import Path
 # ─── Configuration ───────────────────────────────────────────────────────────
 
 HOST = "0.0.0.0"
-PORT = 8000
+PORT = int(os.environ.get("PORT", 8000))
 SECRET_KEY = "farmguardian-secret-key-change-in-production"
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 REPORTS_DIR = os.path.join(UPLOAD_DIR, "reports")
