@@ -61,6 +61,7 @@ const DiseaseDetection = () => {
           title={t('detection.upload_title')}
           subtitle={t('detection.upload_desc')}
         />
+      ) : (
         <div className="flex flex-col lg:flex-row gap-6 relative">
           {/* Image Preview Side */}
           <div className="w-full lg:w-5/12 z-10">
