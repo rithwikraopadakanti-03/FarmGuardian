@@ -61,7 +61,7 @@ const DiseaseDetection = () => {
           subtitle={t('detection.upload_desc')}
         />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
 
           {/* ── Left: Image Preview ── */}
           <div className="glass-card overflow-hidden p-3">
