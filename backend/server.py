@@ -121,23 +121,47 @@ def decode_token(token):
 
 # ─── ML Simulation Service ───────────────────────────────────────────────────
 
+# Class names sorted alphabetically — must match the order flow_from_directory used during training.
+# This is the standard PlantVillage 38-class alphabetical order.
 CLASS_NAMES = [
-    'Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
-    'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew', 'Cherry_(including_sour)___healthy',
-    'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot', 'Corn_(maize)___Common_rust_',
-    'Corn_(maize)___Northern_Leaf_Blight', 'Corn_(maize)___healthy',
-    'Grape___Black_rot', 'Grape___Esca_(Black_Measles)', 'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)',
-    'Grape___healthy', 'Orange___Haunglongbing_(Citrus_greening)',
-    'Peach___Bacterial_spot', 'Peach___healthy',
-    'Pepper,_bell___Bacterial_spot', 'Pepper,_bell___healthy',
-    'Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy',
-    'Raspberry___healthy', 'Soybean___healthy', 'Squash___Powdery_mildew',
-    'Strawberry___Leaf_scorch', 'Strawberry___healthy',
-    'Tomato___Bacterial_spot', 'Tomato___Early_blight', 'Tomato___Late_blight',
-    'Tomato___Leaf_Mold', 'Tomato___Septoria_leaf_spot',
-    'Tomato___Spider_mites Two-spotted_spider_mite', 'Tomato___Target_Spot',
-    'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus',
-    'Tomato___healthy'
+    'Apple___Apple_scab',                                    # 0
+    'Apple___Black_rot',                                     # 1
+    'Apple___Cedar_apple_rust',                              # 2
+    'Apple___healthy',                                       # 3
+    'Blueberry___healthy',                                   # 4
+    'Cherry_(including_sour)___Powdery_mildew',              # 5
+    'Cherry_(including_sour)___healthy',                     # 6
+    'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot',    # 7
+    'Corn_(maize)___Common_rust_',                           # 8
+    'Corn_(maize)___Northern_Leaf_Blight',                   # 9
+    'Corn_(maize)___healthy',                                # 10
+    'Grape___Black_rot',                                     # 11
+    'Grape___Esca_(Black_Measles)',                          # 12
+    'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)',            # 13
+    'Grape___healthy',                                       # 14
+    'Orange___Haunglongbing_(Citrus_greening)',              # 15
+    'Peach___Bacterial_spot',                                # 16
+    'Peach___healthy',                                       # 17
+    'Pepper,_bell___Bacterial_spot',                         # 18
+    'Pepper,_bell___healthy',                                # 19
+    'Potato___Early_blight',                                 # 20
+    'Potato___Late_blight',                                  # 21
+    'Potato___healthy',                                      # 22
+    'Raspberry___healthy',                                   # 23
+    'Soybean___healthy',                                     # 24
+    'Squash___Powdery_mildew',                               # 25
+    'Strawberry___Leaf_scorch',                              # 26
+    'Strawberry___healthy',                                  # 27
+    'Tomato___Bacterial_spot',                               # 28
+    'Tomato___Early_blight',                                 # 29
+    'Tomato___Late_blight',                                  # 30
+    'Tomato___Leaf_Mold',                                    # 31
+    'Tomato___Septoria_leaf_spot',                           # 32
+    'Tomato___Spider_mites Two-spotted_spider_mite',         # 33
+    'Tomato___Target_Spot',                                  # 34
+    'Tomato___Tomato_Yellow_Leaf_Curl_Virus',                # 35
+    'Tomato___Tomato_mosaic_virus',                          # 36
+    'Tomato___healthy',                                      # 37
 ]
 
 DEMO_DISEASES = [
@@ -241,27 +265,39 @@ def real_prediction(image_bytes):
         import numpy as np
         from PIL import Image
 
-        # Load and preprocess image
+        # Load and preprocess image — must match training: rescale=1./255, size=(224,224)
         img = Image.open(BytesIO(image_bytes)).convert("RGB")
         img = img.resize((224, 224))
-        img_array = tf.keras.preprocessing.image.img_to_array(img)
-        img_array = tf.expand_dims(img_array, 0)  # Add batch dimension
-        img_array = img_array / 255.0  # Normalize to [0, 1]
+        img_array = np.array(img, dtype=np.float32) / 255.0  # Match training rescale=1./255
+        img_array = np.expand_dims(img_array, axis=0)        # Shape: (1, 224, 224, 3)
 
         # Run prediction
         predictions = MODEL.predict(img_array, verbose=0)
-        predicted_index = int(tf.argmax(predictions[0]).numpy())
-        confidence = float(tf.reduce_max(predictions[0]).numpy())
+        predicted_index = int(np.argmax(predictions[0]))
+        confidence = float(np.max(predictions[0]))
 
-        # Map index to class name
-        if predicted_index < len(CLASS_NAMES):
-            disease = CLASS_NAMES[predicted_index]
+        # Load class names from JSON if available (most accurate),
+        # otherwise fall back to hardcoded CLASS_NAMES list
+        class_names_path = os.path.join(os.path.dirname(__file__), "class_names.json")
+        if os.path.exists(class_names_path):
+            with open(class_names_path, "r") as f:
+                idx_to_class = json.load(f)
+            disease = idx_to_class.get(str(predicted_index), CLASS_NAMES[predicted_index] if predicted_index < len(CLASS_NAMES) else "Unknown")
         else:
-            disease = "Unknown"
+            disease = CLASS_NAMES[predicted_index] if predicted_index < len(CLASS_NAMES) else "Unknown"
+
+        # Debug log — visible in Render logs
+        top3_indices = np.argsort(predictions[0])[::-1][:3]
+        print(f"[AI] Top predictions:")
+        for i in top3_indices:
+            name = CLASS_NAMES[i] if i < len(CLASS_NAMES) else f"idx_{i}"
+            print(f"  [{i}] {name}: {predictions[0][i]*100:.1f}%")
+        print(f"[AI] Final: {disease} ({confidence*100:.1f}%)")
 
         return disease, round(confidence, 4)
     except Exception as e:
         print(f"[AI] Real prediction failed ({e}), falling back to simulation.")
+        import traceback; traceback.print_exc()
         return simulate_prediction()
 
 def simulate_severity(disease, confidence):
