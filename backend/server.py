@@ -1,7 +1,6 @@
 """
-FarmGuardian AI — Standalone Backend Server
-Uses ONLY Python standard library. No pip installs required.
-Works on Python 3.14+
+FarmGuardian AI — Backend Server
+Real AI predictions powered by TensorFlow/Keras.
 """
 
 import http.server
@@ -19,6 +18,24 @@ import urllib.parse
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
+
+# ─── TensorFlow / Real Model Loading ────────────────────────────────────────
+
+MODEL = None
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "crop_disease_model.keras")
+
+def load_model():
+    global MODEL
+    try:
+        import tensorflow as tf
+        print("[AI] Loading Keras model from:", MODEL_PATH)
+        MODEL = tf.keras.models.load_model(MODEL_PATH)
+        print("[AI] Model loaded successfully! Input shape:", MODEL.input_shape)
+    except Exception as e:
+        print(f"[AI] WARNING: Could not load model ({e}). Falling back to simulation mode.")
+        MODEL = None
+
+load_model()
 
 # ─── Configuration ───────────────────────────────────────────────────────────
 
@@ -208,12 +225,44 @@ YIELD_LOSS = {
 }
 
 def simulate_prediction():
+    """Fallback when model is not loaded."""
     disease = random.choice(DEMO_DISEASES)
     if 'healthy' in disease:
         confidence = round(random.uniform(0.93, 0.99), 4)
     else:
         confidence = round(random.uniform(0.82, 0.98), 4)
     return disease, confidence
+
+
+def real_prediction(image_bytes):
+    """Run inference using the real Keras model."""
+    try:
+        import tensorflow as tf
+        import numpy as np
+        from PIL import Image
+
+        # Load and preprocess image
+        img = Image.open(BytesIO(image_bytes)).convert("RGB")
+        img = img.resize((224, 224))
+        img_array = tf.keras.preprocessing.image.img_to_array(img)
+        img_array = tf.expand_dims(img_array, 0)  # Add batch dimension
+        img_array = img_array / 255.0  # Normalize to [0, 1]
+
+        # Run prediction
+        predictions = MODEL.predict(img_array, verbose=0)
+        predicted_index = int(tf.argmax(predictions[0]).numpy())
+        confidence = float(tf.reduce_max(predictions[0]).numpy())
+
+        # Map index to class name
+        if predicted_index < len(CLASS_NAMES):
+            disease = CLASS_NAMES[predicted_index]
+        else:
+            disease = "Unknown"
+
+        return disease, round(confidence, 4)
+    except Exception as e:
+        print(f"[AI] Real prediction failed ({e}), falling back to simulation.")
+        return simulate_prediction()
 
 def simulate_severity(disease, confidence):
     if 'healthy' in disease.lower():
@@ -227,8 +276,12 @@ def simulate_severity(disease, confidence):
         level, risk = "Severe", "High"
     return level, score, risk
 
-def get_full_prediction(language="en"):
-    disease, confidence = simulate_prediction()
+def get_full_prediction(language="en", image_bytes=None):
+    # Use real model if loaded and image provided, else simulate
+    if MODEL is not None and image_bytes is not None:
+        disease, confidence = real_prediction(image_bytes)
+    else:
+        disease, confidence = simulate_prediction()
     severity_level, severity_score, risk_level = simulate_severity(disease, confidence)
     lang = language if language in RECOMMENDATIONS else "en"
     
@@ -506,13 +559,19 @@ class FarmGuardianHandler(http.server.BaseHTTPRequestHandler):
         try:
             body = self.get_body()
             content_type = self.headers.get('Content-Type', '')
-            
+
             language = "en"
+            image_bytes = None
+
             if 'multipart' in content_type:
                 fields, files = parse_multipart(body, content_type)
                 language = fields.get('language', 'en')
-            
-            result = get_full_prediction(language)
+                # Extract uploaded image bytes
+                file_list = files.get('file', [])
+                if file_list:
+                    image_bytes = file_list[0]['content']
+
+            result = get_full_prediction(language, image_bytes=image_bytes)
             
             # Save scan to DB
             username = self.get_user_from_token()
