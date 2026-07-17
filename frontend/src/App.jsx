@@ -20,8 +20,8 @@ const AppLayout = ({ children }) => {
     <div className="min-h-screen">
       <Navbar />
       <Sidebar />
-      <main className="md:ml-64 pt-16 min-h-screen p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto">
+      <main style={{ marginLeft: '256px', paddingTop: '4rem', minHeight: '100vh', padding: '4rem 2rem 2rem 2rem' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
           {children}
         </div>
       </main>

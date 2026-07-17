@@ -14,7 +14,7 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="w-64 h-screen fixed left-0 top-0 pt-20 border-r border-slate-700/50 bg-slate-900/50 backdrop-blur-xl z-30 hidden md:block">
+    <aside style={{ width: '256px', height: '100vh', position: 'fixed', left: 0, top: 0, paddingTop: '5rem', borderRight: '1px solid rgba(51,65,85,0.5)', background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(24px)', zIndex: 30 }}>
       <div className="flex flex-col gap-2 p-4">
         {navItems.map((item) => (
           <NavLink
