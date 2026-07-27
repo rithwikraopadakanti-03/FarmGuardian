@@ -165,9 +165,8 @@ CLASS_NAMES = [
 ]
 
 DEMO_DISEASES = [
-    'Tomato___Early_blight', 'Tomato___Late_blight', 'Tomato___Leaf_Mold',
-    'Potato___Early_blight', 'Potato___Late_blight', 'Corn_(maize)___Common_rust_',
-    'Apple___Apple_scab', 'Grape___Black_rot', 'Tomato___healthy', 'Potato___healthy'
+    'Tomato___healthy', 'Tomato___Early_blight', 'Tomato___Late_blight',
+    'Potato___healthy', 'Potato___Early_blight', 'Potato___Late_blight'
 ]
 
 RECOMMENDATIONS = {
@@ -276,21 +275,28 @@ def real_prediction(image_bytes):
         predicted_index = int(np.argmax(predictions[0]))
         confidence = float(np.max(predictions[0]))
 
-        # Load class names from JSON if available (most accurate),
-        # otherwise fall back to hardcoded CLASS_NAMES list
+        # Load class names from JSON if available
         class_names_path = os.path.join(os.path.dirname(__file__), "class_names.json")
+        idx_map = {}
         if os.path.exists(class_names_path):
             with open(class_names_path, "r") as f:
-                idx_to_class = json.load(f)
-            disease = idx_to_class.get(str(predicted_index), CLASS_NAMES[predicted_index] if predicted_index < len(CLASS_NAMES) else "Unknown")
-        else:
-            disease = CLASS_NAMES[predicted_index] if predicted_index < len(CLASS_NAMES) else "Unknown"
+                idx_map = json.load(f)
+
+        def get_class_name(idx):
+            s_idx = str(idx)
+            if s_idx in idx_map:
+                return idx_map[s_idx]
+            if idx < len(CLASS_NAMES):
+                return CLASS_NAMES[idx]
+            return f"Unknown_class_{idx}"
+
+        disease = get_class_name(predicted_index)
 
         # Debug log — visible in Render logs
-        top3_indices = np.argsort(predictions[0])[::-1][:3]
+        top3_indices = np.argsort(predictions[0])[::-1][:min(3, len(predictions[0]))]
         print(f"[AI] Top predictions:")
         for i in top3_indices:
-            name = CLASS_NAMES[i] if i < len(CLASS_NAMES) else f"idx_{i}"
+            name = get_class_name(i)
             print(f"  [{i}] {name}: {predictions[0][i]*100:.1f}%")
         print(f"[AI] Final: {disease} ({confidence*100:.1f}%)")
 
