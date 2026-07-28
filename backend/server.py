@@ -302,11 +302,12 @@ def real_prediction(image_bytes):
             print(f"  [{i}] {name}: {predictions[0][i]*100:.1f}%")
         print(f"[AI] Final: {disease} ({confidence*100:.1f}%)")
 
-        return disease, round(confidence, 4)
+        return disease, round(confidence, 4), predicted_index, probs
     except Exception as e:
         print(f"[AI] Real prediction failed ({e}), falling back to simulation.")
         import traceback; traceback.print_exc()
-        return simulate_prediction()
+        disease, conf = simulate_prediction()
+        return disease, conf, -1, []
 
 def simulate_severity(disease, confidence):
     if 'healthy' in disease.lower():
@@ -321,9 +322,11 @@ def simulate_severity(disease, confidence):
     return level, score, risk
 
 def get_full_prediction(language="en", image_bytes=None):
+    predicted_index = -1
+    raw_probabilities = []
     # Use real model if loaded and image provided, else simulate
     if MODEL is not None and image_bytes is not None:
-        disease, confidence = real_prediction(image_bytes)
+        disease, confidence, predicted_index, raw_probabilities = real_prediction(image_bytes)
     else:
         disease, confidence = simulate_prediction()
     severity_level, severity_score, risk_level = simulate_severity(disease, confidence)
@@ -332,6 +335,8 @@ def get_full_prediction(language="en", image_bytes=None):
     result = {
         "disease": disease,
         "confidence": confidence,
+        "predicted_index": predicted_index,
+        "raw_probabilities": raw_probabilities,
         "severity_level": severity_level,
         "severity_score": severity_score,
         "risk_level": risk_level,
