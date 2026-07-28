@@ -29,13 +29,16 @@ def load_model():
     try:
         try:
             import keras
-            print("[AI] Loading Keras model using Keras 3 from:", MODEL_PATH)
-            MODEL = keras.models.load_model(MODEL_PATH)
+            print("[AI] Loading Keras model using Keras 3 (safe_mode=False, compile=False) from:", MODEL_PATH)
+            MODEL = keras.models.load_model(MODEL_PATH, safe_mode=False, compile=False)
             print("[AI] Model loaded successfully via Keras 3! Input shape:", MODEL.input_shape)
         except Exception as e1:
             print(f"[AI] Keras 3 load attempt note ({e1}), trying tf.keras...")
             import tensorflow as tf
-            MODEL = tf.keras.models.load_model(MODEL_PATH)
+            try:
+                MODEL = tf.keras.models.load_model(MODEL_PATH, compile=False)
+            except Exception:
+                MODEL = tf.keras.models.load_model(MODEL_PATH)
             print("[AI] Model loaded successfully via tf.keras! Input shape:", MODEL.input_shape)
     except Exception as e:
         print(f"[AI] ERROR: Could not load model ({e}). Falling back to simulation mode.")
