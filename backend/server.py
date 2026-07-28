@@ -21,31 +21,46 @@ from pathlib import Path
 
 # ─── TensorFlow / Real Model Loading ────────────────────────────────────────
 
-MODEL = None
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "crop_disease_model.keras")
 WEIGHTS_PATH = os.path.join(os.path.dirname(__file__), "model.weights.h5")
 
 def load_model():
     global MODEL
     try:
         import tensorflow as tf
+        import h5py
         from tensorflow.keras.applications import MobileNetV2
-        from tensorflow.keras.layers import Dense, Dropout, GlobalAveragePooling2D, Rescaling, Input
-        from tensorflow.keras.models import Sequential
+        from tensorflow.keras.layers import Dense, Dropout, GlobalAveragePooling2D
+        from tensorflow.keras.models import Model
 
         if os.path.exists(WEIGHTS_PATH):
-            print("[AI] Building MobileNetV2 architecture and loading weights from:", WEIGHTS_PATH)
-            m = Sequential([
-                Input(shape=(224, 224, 3)),
-                Rescaling(1./255),
-                MobileNetV2(weights=None, include_top=False, input_shape=(224, 224, 3)),
-                GlobalAveragePooling2D(),
-                Dropout(0.3),
-                Dense(128, activation='relu'),
-                Dense(6, activation='softmax')
-            ])
-            m.load_weights(WEIGHTS_PATH)
+            print("[AI] Building MobileNetV2 architecture & setting layer weights directly from:", WEIGHTS_PATH)
+            base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+            base_model.trainable = False
+
+            gap = GlobalAveragePooling2D()
+            dropout = Dropout(0.3)
+            dense1 = Dense(128, activation='relu')
+            dense2 = Dense(6, activation='softmax')
+
+            with h5py.File(WEIGHTS_PATH, 'r') as f:
+                w_dense_kernel = f['layers/dense/vars/0'][:]
+                w_dense_bias = f['layers/dense/vars/1'][:]
+                w_dense1_kernel = f['layers/dense_1/vars/0'][:]
+                w_dense1_bias = f['layers/dense_1/vars/1'][:]
+
+            x = base_model.output
+            x = gap(x)
+            x = dropout(x)
+            x = dense1(x)
+            outputs = dense2(x)
+
+            m = Model(inputs=base_model.input, outputs=outputs)
+            dense1.set_weights([w_dense_kernel, w_dense_bias])
+            dense2.set_weights([w_dense1_kernel, w_dense1_bias])
+
             MODEL = m
-            print("[AI] Model weights loaded successfully! Input shape:", MODEL.input_shape)
+            print("[AI] Model built and weights loaded successfully! Input shape:", MODEL.input_shape)
         elif os.path.exists(MODEL_PATH):
             print("[AI] Loading Keras model from:", MODEL_PATH)
             MODEL = tf.keras.models.load_model(MODEL_PATH, compile=False)
@@ -284,11 +299,13 @@ def real_prediction(image_bytes):
         import numpy as np
         from PIL import Image
 
-        # Load and preprocess image — model has built-in Rescaling(scale=1/255.0) layer, so pass 0..255 float32 array
+        # Load and preprocess image — use MobileNetV2 preprocess_input [-1, 1]
         img = Image.open(BytesIO(image_bytes)).convert("RGB")
         img = img.resize((224, 224))
         img_array = np.array(img, dtype=np.float32)     # Shape: (224, 224, 3), range 0..255
         img_array = np.expand_dims(img_array, axis=0)   # Shape: (1, 224, 224, 3)
+        from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+        img_array = preprocess_input(img_array)
 
         # Run prediction
         predictions = MODEL.predict(img_array, verbose=0)
