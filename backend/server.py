@@ -21,11 +21,14 @@ from pathlib import Path
 
 # ─── TensorFlow / Real Model Loading ────────────────────────────────────────
 
+MODEL = None
+MODEL_LOAD_STATUS = "Not attempted"
+MODEL_ERROR = None
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "crop_disease_model.keras")
 WEIGHTS_PATH = os.path.join(os.path.dirname(__file__), "model.weights.h5")
 
 def load_model():
-    global MODEL
+    global MODEL, MODEL_LOAD_STATUS, MODEL_ERROR
     try:
         import tensorflow as tf
         import h5py
@@ -33,7 +36,12 @@ def load_model():
         from tensorflow.keras.layers import Dense, Dropout, GlobalAveragePooling2D
         from tensorflow.keras.models import Model
 
-        if os.path.exists(WEIGHTS_PATH):
+        weights_exist = os.path.exists(WEIGHTS_PATH)
+        keras_exist = os.path.exists(MODEL_PATH)
+        MODEL_LOAD_STATUS = f"Checked paths: weights={weights_exist}, keras={keras_exist}"
+        print(f"[AI] {MODEL_LOAD_STATUS}")
+
+        if weights_exist:
             print("[AI] Building MobileNetV2 architecture & setting layer weights directly from:", WEIGHTS_PATH)
             base_model = MobileNetV2(weights=None, include_top=False, input_shape=(224, 224, 3))
             base_model.trainable = False
@@ -63,15 +71,26 @@ def load_model():
             dense2.set_weights([w_dense1_kernel, w_dense1_bias])
 
             MODEL = m
+            MODEL_LOAD_STATUS = "Successfully loaded via h5py weights"
+            MODEL_ERROR = None
             print("[AI] Model built and weights loaded successfully! Input shape:", MODEL.input_shape)
-        elif os.path.exists(MODEL_PATH):
+        elif keras_exist:
             print("[AI] Loading Keras model from:", MODEL_PATH)
             MODEL = tf.keras.models.load_model(MODEL_PATH, compile=False)
+            MODEL_LOAD_STATUS = "Successfully loaded via tf.keras"
+            MODEL_ERROR = None
             print("[AI] Model loaded successfully! Input shape:", MODEL.input_shape)
+        else:
+            MODEL_LOAD_STATUS = "Failed: neither weights nor keras file found"
+            MODEL_ERROR = "No model files found at expected paths"
     except Exception as e:
-        print(f"[AI] ERROR: Could not load model ({e}). Falling back to simulation mode.")
-        import traceback; traceback.print_exc()
+        import traceback
+        err_msg = f"{type(e).__name__}: {str(e)}"
+        print(f"[AI] ERROR: Could not load model ({err_msg}). Falling back to simulation mode.")
+        traceback.print_exc()
         MODEL = None
+        MODEL_LOAD_STATUS = "Failed with exception"
+        MODEL_ERROR = err_msg
 
 load_model()
 
@@ -377,6 +396,8 @@ def get_full_prediction(language="en", image_bytes=None):
         "confidence": confidence,
         "predicted_index": predicted_index,
         "raw_probabilities": raw_probabilities,
+        "model_load_status": MODEL_LOAD_STATUS,
+        "model_error": MODEL_ERROR,
         "severity_level": severity_level,
         "severity_score": severity_score,
         "risk_level": risk_level,
