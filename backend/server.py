@@ -56,6 +56,9 @@ def load_model():
             outputs = dense2(x)
 
             m = Model(inputs=base_model.input, outputs=outputs)
+            import numpy as np
+            _ = m(np.zeros((1, 224, 224, 3), dtype=np.float32), training=False)
+
             dense1.set_weights([w_dense_kernel, w_dense_bias])
             dense2.set_weights([w_dense1_kernel, w_dense1_bias])
 
