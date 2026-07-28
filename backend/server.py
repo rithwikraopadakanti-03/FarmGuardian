@@ -264,11 +264,11 @@ def real_prediction(image_bytes):
         import numpy as np
         from PIL import Image
 
-        # Load and preprocess image — must match training: rescale=1./255, size=(224,224)
+        # Load and preprocess image — model has built-in Rescaling(scale=1/255.0) layer, so pass 0..255 float32 array
         img = Image.open(BytesIO(image_bytes)).convert("RGB")
         img = img.resize((224, 224))
-        img_array = np.array(img, dtype=np.float32) / 255.0  # Match training rescale=1./255
-        img_array = np.expand_dims(img_array, axis=0)        # Shape: (1, 224, 224, 3)
+        img_array = np.array(img, dtype=np.float32)     # Shape: (224, 224, 3), range 0..255
+        img_array = np.expand_dims(img_array, axis=0)   # Shape: (1, 224, 224, 3)
 
         # Run prediction
         predictions = MODEL.predict(img_array, verbose=0)
@@ -293,6 +293,8 @@ def real_prediction(image_bytes):
         disease = get_class_name(predicted_index)
 
         # Debug log — visible in Render logs
+        probs = [round(float(p), 4) for p in predictions[0]]
+        print(f"[AI RAW PROBABILITIES] {probs}")
         top3_indices = np.argsort(predictions[0])[::-1][:min(3, len(predictions[0]))]
         print(f"[AI] Top predictions:")
         for i in top3_indices:
