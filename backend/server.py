@@ -27,12 +27,19 @@ MODEL_PATH = os.path.join(os.path.dirname(__file__), "crop_disease_model.keras")
 def load_model():
     global MODEL
     try:
-        import tensorflow as tf
-        print("[AI] Loading Keras model from:", MODEL_PATH)
-        MODEL = tf.keras.models.load_model(MODEL_PATH)
-        print("[AI] Model loaded successfully! Input shape:", MODEL.input_shape)
+        try:
+            import keras
+            print("[AI] Loading Keras model using Keras 3 from:", MODEL_PATH)
+            MODEL = keras.models.load_model(MODEL_PATH)
+            print("[AI] Model loaded successfully via Keras 3! Input shape:", MODEL.input_shape)
+        except Exception as e1:
+            print(f"[AI] Keras 3 load attempt note ({e1}), trying tf.keras...")
+            import tensorflow as tf
+            MODEL = tf.keras.models.load_model(MODEL_PATH)
+            print("[AI] Model loaded successfully via tf.keras! Input shape:", MODEL.input_shape)
     except Exception as e:
-        print(f"[AI] WARNING: Could not load model ({e}). Falling back to simulation mode.")
+        print(f"[AI] ERROR: Could not load model ({e}). Falling back to simulation mode.")
+        import traceback; traceback.print_exc()
         MODEL = None
 
 load_model()
