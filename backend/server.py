@@ -22,24 +22,34 @@ from pathlib import Path
 # ─── TensorFlow / Real Model Loading ────────────────────────────────────────
 
 MODEL = None
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "crop_disease_model.keras")
+WEIGHTS_PATH = os.path.join(os.path.dirname(__file__), "model.weights.h5")
 
 def load_model():
     global MODEL
     try:
-        try:
-            import keras
-            print("[AI] Loading Keras model using Keras 3 (safe_mode=False, compile=False) from:", MODEL_PATH)
-            MODEL = keras.models.load_model(MODEL_PATH, safe_mode=False, compile=False)
-            print("[AI] Model loaded successfully via Keras 3! Input shape:", MODEL.input_shape)
-        except Exception as e1:
-            print(f"[AI] Keras 3 load attempt note ({e1}), trying tf.keras...")
-            import tensorflow as tf
-            try:
-                MODEL = tf.keras.models.load_model(MODEL_PATH, compile=False)
-            except Exception:
-                MODEL = tf.keras.models.load_model(MODEL_PATH)
-            print("[AI] Model loaded successfully via tf.keras! Input shape:", MODEL.input_shape)
+        import tensorflow as tf
+        from tensorflow.keras.applications import MobileNetV2
+        from tensorflow.keras.layers import Dense, Dropout, GlobalAveragePooling2D, Rescaling, Input
+        from tensorflow.keras.models import Sequential
+
+        if os.path.exists(WEIGHTS_PATH):
+            print("[AI] Building MobileNetV2 architecture and loading weights from:", WEIGHTS_PATH)
+            m = Sequential([
+                Input(shape=(224, 224, 3)),
+                Rescaling(1./255),
+                MobileNetV2(weights=None, include_top=False, input_shape=(224, 224, 3)),
+                GlobalAveragePooling2D(),
+                Dropout(0.3),
+                Dense(128, activation='relu'),
+                Dense(6, activation='softmax')
+            ])
+            m.load_weights(WEIGHTS_PATH)
+            MODEL = m
+            print("[AI] Model weights loaded successfully! Input shape:", MODEL.input_shape)
+        elif os.path.exists(MODEL_PATH):
+            print("[AI] Loading Keras model from:", MODEL_PATH)
+            MODEL = tf.keras.models.load_model(MODEL_PATH, compile=False)
+            print("[AI] Model loaded successfully! Input shape:", MODEL.input_shape)
     except Exception as e:
         print(f"[AI] ERROR: Could not load model ({e}). Falling back to simulation mode.")
         import traceback; traceback.print_exc()
