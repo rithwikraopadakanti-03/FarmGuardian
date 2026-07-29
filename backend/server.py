@@ -297,8 +297,11 @@ def real_prediction(image_bytes):
         img = Image.open(BytesIO(image_bytes)).convert("RGB")
         img = img.resize((224, 224))
         
-        # Pass 0..255 float32 array in (1, 3, 224, 224) format — model graph contains built-in (x / 127.5) - 1.0 normalization
-        img_array = np.array(img, dtype=np.float32)            # Shape (224, 224, 3), range 0..255
+        # Normalize with ImageNet mean and std for official MobileNetV2 ONNX graph
+        img_array = np.array(img, dtype=np.float32) / 255.0     # Shape (224, 224, 3), range [0, 1]
+        mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+        std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+        img_array = (img_array - mean) / std
         img_array = np.transpose(img_array, (2, 0, 1))          # Shape (3, 224, 224)
         img_array = np.expand_dims(img_array, axis=0)           # Shape (1, 3, 224, 224)
 
