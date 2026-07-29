@@ -31,7 +31,14 @@ def load_model():
     try:
         if os.path.exists(ONNX_PATH):
             print("[AI] Loading ONNX model from:", ONNX_PATH)
-            import onnxruntime as ort
+            try:
+                import onnxruntime as ort
+            except ImportError:
+                print("[AI] onnxruntime missing in python environment. Auto-installing onnxruntime...")
+                import subprocess, sys
+                subprocess.run([sys.executable, "-m", "pip", "install", "onnxruntime"], check=True)
+                import onnxruntime as ort
+
             MODEL = ort.InferenceSession(ONNX_PATH)
             MODEL_LOAD_STATUS = "Successfully loaded ONNX model via onnxruntime"
             MODEL_ERROR = None
