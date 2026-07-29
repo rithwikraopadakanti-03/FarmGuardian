@@ -511,9 +511,10 @@ class FarmGuardianHandler(http.server.BaseHTTPRequestHandler):
                 "status": "ok",
                 "version": "1.0.0",
                 "uptime": uptime,
-                "model_loaded": False,
-                "simulation_mode": True,
-                "message": "FarmGuardian AI Backend is running in simulation mode."
+                "model_loaded": MODEL is not None,
+                "simulation_mode": MODEL is None,
+                "model_load_status": MODEL_LOAD_STATUS,
+                "message": "FarmGuardian AI Backend is active and running." if MODEL is not None else "FarmGuardian AI Backend is running in simulation mode."
             })
         
         elif path.startswith('/reports/'):
