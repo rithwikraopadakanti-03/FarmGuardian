@@ -648,9 +648,11 @@ class FarmGuardianHandler(http.server.BaseHTTPRequestHandler):
             if 'multipart' in content_type:
                 fields, files = parse_multipart(body, content_type)
                 language = fields.get('language', 'en')
-                # Extract uploaded image bytes
-                file_list = files.get('file', [])
-                if file_list:
+                # Extract uploaded image bytes robustly across any form field key
+                file_list = files.get('file', files.get('image', files.get('files', [])))
+                if not file_list and files:
+                    file_list = list(files.values())[0]
+                if file_list and len(file_list) > 0 and 'content' in file_list[0]:
                     image_bytes = file_list[0]['content']
 
             result = get_full_prediction(language, image_bytes=image_bytes)
