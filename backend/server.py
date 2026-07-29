@@ -19,6 +19,13 @@ from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 
+try:
+    from PIL import Image
+except ImportError:
+    import subprocess, sys
+    subprocess.run([sys.executable, "-m", "pip", "install", "Pillow", "onnxruntime"], check=True)
+    from PIL import Image
+
 # ─── TensorFlow / Real Model Loading ────────────────────────────────────────
 
 MODEL = None
