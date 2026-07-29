@@ -324,13 +324,13 @@ def real_prediction(image_bytes):
         disease = get_class_name(predicted_index)
 
         # Debug log — visible in Render logs
-        probs = [round(float(p), 4) for p in predictions[0]]
+        probs = [round(float(p), 4) for p in predictions]
         print(f"[AI RAW PROBABILITIES] {probs}")
-        top3_indices = np.argsort(predictions[0])[::-1][:min(3, len(predictions[0]))]
+        top3_indices = np.argsort(predictions)[::-1][:min(3, len(predictions))]
         print(f"[AI] Top predictions:")
         for i in top3_indices:
             name = get_class_name(i)
-            print(f"  [{i}] {name}: {predictions[0][i]*100:.1f}%")
+            print(f"  [{i}] {name}: {predictions[i]*100:.1f}%")
         print(f"[AI] Final: {disease} ({confidence*100:.1f}%)")
 
         return disease, round(confidence, 4), predicted_index, probs
