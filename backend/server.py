@@ -24,69 +24,26 @@ from pathlib import Path
 MODEL = None
 MODEL_LOAD_STATUS = "Not attempted"
 MODEL_ERROR = None
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "crop_disease_model.keras")
-WEIGHTS_PATH = os.path.join(os.path.dirname(__file__), "model.weights.h5")
+ONNX_PATH = os.path.join(os.path.dirname(__file__), "crop_disease_model.onnx")
 
 def load_model():
     global MODEL, MODEL_LOAD_STATUS, MODEL_ERROR
     try:
-        import tensorflow as tf
-        import h5py
-        from tensorflow.keras.applications import MobileNetV2
-        from tensorflow.keras.layers import Dense, Dropout, GlobalAveragePooling2D
-        from tensorflow.keras.models import Model
-
-        weights_exist = os.path.exists(WEIGHTS_PATH)
-        keras_exist = os.path.exists(MODEL_PATH)
-        MODEL_LOAD_STATUS = f"Checked paths: weights={weights_exist}, keras={keras_exist}"
-        print(f"[AI] {MODEL_LOAD_STATUS}")
-
-        if weights_exist:
-            print("[AI] Building MobileNetV2 architecture & setting layer weights directly from:", WEIGHTS_PATH)
-            base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
-            base_model.trainable = False
-
-            gap = GlobalAveragePooling2D()
-            dropout = Dropout(0.3)
-            dense1 = Dense(128, activation='relu')
-            dense2 = Dense(6, activation='softmax')
-
-            with h5py.File(WEIGHTS_PATH, 'r') as f:
-                w_dense_kernel = f['layers/dense/vars/0'][:]
-                w_dense_bias = f['layers/dense/vars/1'][:]
-                w_dense1_kernel = f['layers/dense_1/vars/0'][:]
-                w_dense1_bias = f['layers/dense_1/vars/1'][:]
-
-            x = base_model.output
-            x = gap(x)
-            x = dropout(x)
-            x = dense1(x)
-            outputs = dense2(x)
-
-            m = Model(inputs=base_model.input, outputs=outputs)
-            import numpy as np
-            _ = m(np.zeros((1, 224, 224, 3), dtype=np.float32), training=False)
-
-            dense1.set_weights([w_dense_kernel, w_dense_bias])
-            dense2.set_weights([w_dense1_kernel, w_dense1_bias])
-
-            MODEL = m
-            MODEL_LOAD_STATUS = "Successfully loaded via h5py weights"
+        if os.path.exists(ONNX_PATH):
+            print("[AI] Loading ONNX model from:", ONNX_PATH)
+            import onnxruntime as ort
+            MODEL = ort.InferenceSession(ONNX_PATH)
+            MODEL_LOAD_STATUS = "Successfully loaded ONNX model via onnxruntime"
             MODEL_ERROR = None
-            print("[AI] Model built and weights loaded successfully! Input shape:", MODEL.input_shape)
-        elif keras_exist:
-            print("[AI] Loading Keras model from:", MODEL_PATH)
-            MODEL = tf.keras.models.load_model(MODEL_PATH, compile=False)
-            MODEL_LOAD_STATUS = "Successfully loaded via tf.keras"
-            MODEL_ERROR = None
-            print("[AI] Model loaded successfully! Input shape:", MODEL.input_shape)
+            print("[AI] ONNX model loaded successfully!")
         else:
-            MODEL_LOAD_STATUS = "Failed: neither weights nor keras file found"
-            MODEL_ERROR = "No model files found at expected paths"
+            MODEL_LOAD_STATUS = f"Failed: ONNX model file not found at {ONNX_PATH}"
+            MODEL_ERROR = "crop_disease_model.onnx file missing"
+            MODEL = None
     except Exception as e:
         import traceback
         err_msg = f"{type(e).__name__}: {str(e)}"
-        print(f"[AI] ERROR: Could not load model ({err_msg}). Falling back to simulation mode.")
+        print(f"[AI] ERROR loading ONNX model ({err_msg}). Falling back to simulation mode.")
         traceback.print_exc()
         MODEL = None
         MODEL_LOAD_STATUS = "Failed with exception"
@@ -315,24 +272,32 @@ def simulate_prediction():
 
 
 def real_prediction(image_bytes):
-    """Run inference using the real Keras model."""
+    """Run inference using the real ONNX model."""
     try:
-        import tensorflow as tf
         import numpy as np
         from PIL import Image
 
-        # Load and preprocess image — use MobileNetV2 preprocess_input [-1, 1]
+        # Load image and resize to 224x224
         img = Image.open(BytesIO(image_bytes)).convert("RGB")
         img = img.resize((224, 224))
-        img_array = np.array(img, dtype=np.float32)     # Shape: (224, 224, 3), range 0..255
-        img_array = np.expand_dims(img_array, axis=0)   # Shape: (1, 224, 224, 3)
-        from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
-        img_array = preprocess_input(img_array)
+        
+        # Normalize with ImageNet mean and std for PyTorch MobileNetV2 ONNX backbone
+        img_array = np.array(img, dtype=np.float32) / 255.0  # Range [0, 1]
+        mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+        std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+        img_array = (img_array - mean) / std
+        
+        # Transpose to (C, H, W) and add batch dim -> (1, 3, 224, 224)
+        img_array = np.transpose(img_array, (2, 0, 1))
+        img_array = np.expand_dims(img_array, axis=0)
 
-        # Run prediction
-        predictions = MODEL.predict(img_array, verbose=0)
-        predicted_index = int(np.argmax(predictions[0]))
-        confidence = float(np.max(predictions[0]))
+        # Run ONNX session prediction
+        input_name = MODEL.get_inputs()[0].name
+        outputs = MODEL.run(None, {input_name: img_array})
+        predictions = outputs[0][0]  # Shape (6,)
+
+        predicted_index = int(np.argmax(predictions))
+        confidence = float(np.max(predictions))
 
         # Load class names from JSON if available
         class_names_path = os.path.join(os.path.dirname(__file__), "class_names.json")
