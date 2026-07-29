@@ -293,19 +293,14 @@ def real_prediction(image_bytes):
         import numpy as np
         from PIL import Image
 
-        # Load image and resize to 224x224
+        # Load image, convert to RGB, and resize to 224x224
         img = Image.open(BytesIO(image_bytes)).convert("RGB")
         img = img.resize((224, 224))
         
-        # Normalize with ImageNet mean and std for PyTorch MobileNetV2 ONNX backbone
-        img_array = np.array(img, dtype=np.float32) / 255.0  # Range [0, 1]
-        mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
-        std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
-        img_array = (img_array - mean) / std
-        
-        # Transpose to (C, H, W) and add batch dim -> (1, 3, 224, 224)
-        img_array = np.transpose(img_array, (2, 0, 1))
-        img_array = np.expand_dims(img_array, axis=0)
+        # Pass 0..255 float32 array in (1, 3, 224, 224) format — model graph contains built-in (x / 127.5) - 1.0 normalization
+        img_array = np.array(img, dtype=np.float32)            # Shape (224, 224, 3), range 0..255
+        img_array = np.transpose(img_array, (2, 0, 1))          # Shape (3, 224, 224)
+        img_array = np.expand_dims(img_array, axis=0)           # Shape (1, 3, 224, 224)
 
         # Run ONNX session prediction
         input_name = MODEL.get_inputs()[0].name
