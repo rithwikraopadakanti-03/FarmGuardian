@@ -33,11 +33,13 @@ def load_model():
             print("[AI] Loading ONNX model from:", ONNX_PATH)
             try:
                 import onnxruntime as ort
+                from PIL import Image
             except ImportError:
-                print("[AI] onnxruntime missing in python environment. Auto-installing onnxruntime...")
+                print("[AI] Dependencies missing in python environment. Auto-installing onnxruntime and Pillow...")
                 import subprocess, sys
-                subprocess.run([sys.executable, "-m", "pip", "install", "onnxruntime"], check=True)
+                subprocess.run([sys.executable, "-m", "pip", "install", "onnxruntime", "Pillow"], check=True)
                 import onnxruntime as ort
+                from PIL import Image
 
             MODEL = ort.InferenceSession(ONNX_PATH)
             MODEL_LOAD_STATUS = "Successfully loaded ONNX model via onnxruntime"
