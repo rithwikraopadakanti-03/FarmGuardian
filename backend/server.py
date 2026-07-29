@@ -43,7 +43,7 @@ def load_model():
 
         if weights_exist:
             print("[AI] Building MobileNetV2 architecture & setting layer weights directly from:", WEIGHTS_PATH)
-            base_model = MobileNetV2(weights=None, include_top=False, input_shape=(224, 224, 3))
+            base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
             base_model.trainable = False
 
             gap = GlobalAveragePooling2D()
