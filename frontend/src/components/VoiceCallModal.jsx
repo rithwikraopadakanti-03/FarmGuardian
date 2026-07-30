@@ -30,7 +30,7 @@ export default function VoiceCallModal({ isOpen, onClose, scanData, currentLang 
       call_id: "OMNI-5777194",
       farmer_phone: "+91 8121985059",
       duration_seconds: 78,
-      transcript: `[00:02] AI Voice: 'Hello Ramesh Rao ji, calling via FarmGuardian AI.'\n[00:08] AI Voice: 'Diagnostic model detected ${disease} (${severity}).'\n[00:18] AI Voice: 'Weather is ${weather}. Recommended action: Apply Copper Oxychloride spray in late evening.'\n[00:30] AI Voice: 'Estimated crop savings: ₹18,500. Do you have any questions?'\n[00:45] Farmer: 'Which spray should I use tomorrow?'\n[00:55] AI Voice: 'Use Copper Oxychloride 50% WP in late evening after 6:00 PM.'`,
+      transcript: `[00:02] AI Voice: 'Hello Rithwik Rao ji, calling via FarmGuardian AI.'\n[00:08] AI Voice: 'Diagnostic model detected ${disease} (${severity}).'\n[00:18] AI Voice: 'Weather is ${weather}. Recommended action: Apply Copper Oxychloride spray in late evening.'\n[00:30] AI Voice: 'Estimated crop savings: ₹18,500. Do you have any questions?'\n[00:45] Farmer: 'Which spray should I use tomorrow?'\n[00:55] AI Voice: 'Use Copper Oxychloride 50% WP in late evening after 6:00 PM.'`,
       ai_summary: `OmniDimension AI dispatched live call to +91 8121985059. Advised on ${disease} treatment & weather window.`,
       reminder_scheduled: "Tomorrow at 5:30 PM (Day 2 Spray Reminder)"
     };
@@ -41,7 +41,7 @@ export default function VoiceCallModal({ isOpen, onClose, scanData, currentLang 
     // Web Speech Synthesis live audio playback
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      const spokenText = `Hello Ramesh Rao ji, calling from FarmGuardian A I. Diagnostic model detected ${disease}. Weather is ${weather}. Recommended action: Apply Copper Oxychloride spray in late evening. Estimated crop savings: 18,500 rupees.`;
+      const spokenText = `Hello Rithwik Rao ji, calling from FarmGuardian A I. Diagnostic model detected ${disease}. Weather is ${weather}. Recommended action: Apply Copper Oxychloride spray in late evening. Estimated crop savings: 18,500 rupees.`;
       const utterance = new SpeechSynthesisUtterance(spokenText);
       utterance.rate = 0.95;
       utterance.pitch = 1.0;

@@ -50,7 +50,7 @@ def initiate_omnidimension_voice_call(scan_data, farmer_phone="+91 8121985059"):
                     "call_id": f"OMNI-{req_id}",
                     "farmer_phone": clean_phone,
                     "duration_seconds": 78,
-                    "transcript": f"[00:02] AI Voice: 'Hello Ramesh Rao ji, calling via OmniDimension Agent 134874.'\n[00:08] AI Voice: 'Diagnostic model detected {disease} ({severity}).'\n[00:18] AI Voice: 'Weather is {weather}. Recommended action: {day_2_plan}.'\n[00:30] AI Voice: 'Estimated crop savings: ₹{savings}. Do you have any questions?'\n[00:45] Farmer: 'Which spray should I use tomorrow?'\n[00:55] AI Voice: 'Use Copper Oxychloride 50% WP in late evening after 6:00 PM.'",
+                    "transcript": f"[00:02] AI Voice: 'Hello Rithwik Rao ji, calling via OmniDimension Agent 134874.'\n[00:08] AI Voice: 'Diagnostic model detected {disease} ({severity}).'\n[00:18] AI Voice: 'Weather is {weather}. Recommended action: {day_2_plan}.'\n[00:30] AI Voice: 'Estimated crop savings: ₹{savings}. Do you have any questions?'\n[00:45] Farmer: 'Which spray should I use tomorrow?'\n[00:55] AI Voice: 'Use Copper Oxychloride 50% WP in late evening after 6:00 PM.'",
                     "ai_summary": f"OmniDimension AI Agent 134874 dispatched live call to {clean_phone}. Advised on {disease} treatment & weather window.",
                     "reminder_scheduled": "Tomorrow at 5:30 PM (Day 2 Spray Reminder)",
                     "timestamp": datetime.utcnow().isoformat()
@@ -60,7 +60,7 @@ def initiate_omnidimension_voice_call(scan_data, farmer_phone="+91 8121985059"):
 
     # High-fidelity realistic AI Voice Call Dialogue Simulation
     transcript = f"""
-[00:02] AI Voice: "Hello Ramesh Rao ji, this is FarmGuardian AI Voice Assistant."
+[00:02] AI Voice: "Hello Rithwik Rao ji, this is FarmGuardian AI Voice Assistant."
 [00:08] AI Voice: "Our MobileNetV2 diagnostic model detected '{disease}' on your crop leaves with {scan_data.get('confidence', 0.88)*100:.1f}% confidence."
 [00:18] AI Voice: "Current weather is {weather}. High moisture means you should apply chemical fungicide tomorrow after 6:00 PM when wind slows down."
 [00:30] AI Voice: "Following this 5-day plan can save up to ₹{savings:,.0f} of your harvest yield."

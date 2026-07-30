@@ -16,7 +16,7 @@ class FarmProfile(Base):
     __tablename__ = "farm_profiles"
 
     id = Column(Integer, primary_key=True, index=True)
-    farmer_name = Column(String, default="Ramesh Rao")
+    farmer_name = Column(String, default="Rithwik Rao")
     location_name = Column(String, default="Guntur, Andhra Pradesh")
     latitude = Column(Float, default=16.3067)
     longitude = Column(Float, default=80.4365)
