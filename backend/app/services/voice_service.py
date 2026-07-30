@@ -3,7 +3,7 @@ import requests
 import json
 from datetime import datetime
 
-OMNIDIMENSION_API_KEY = os.getenv("OMNIDIMENSION_API_KEY", "")
+OMNIDIMENSION_API_KEY = os.getenv("OMNIDIMENSION_API_KEY", "0YkbCjLJc-LSJShpxCd32o3_F9lBlaAwhrlpzmZMYoQ")
 
 def initiate_omnidimension_voice_call(scan_data, farmer_phone="+91 8121985059"):
     """

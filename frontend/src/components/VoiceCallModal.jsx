@@ -30,6 +30,9 @@ export default function VoiceCallModal({ isOpen, onClose, scanData, currentLang 
       farmer_phone: "+91 8121985059"
     };
 
+    // Set active immediately so UI doesn't hang
+    setCallState('active');
+
     const apiUrl = window.location.hostname === 'localhost' ? '/api/voice/call' : 'https://farmguardian.onrender.com/api/voice/call';
     fetch(apiUrl, {
       method: 'POST',
@@ -39,11 +42,9 @@ export default function VoiceCallModal({ isOpen, onClose, scanData, currentLang 
       .then(res => res.json())
       .then(data => {
         setCallResult(data);
-        setCallState('active');
       })
       .catch(err => {
         console.error("Voice API call error:", err);
-        setCallState('active');
       });
   }, [isOpen, scanData]);
 
