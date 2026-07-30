@@ -9,6 +9,15 @@ from io import BytesIO
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
+# Load local .env if present
+env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+if os.path.exists(env_file):
+    with open(env_file, "r") as f:
+        for line in f:
+            if line.strip() and not line.startswith("#") and "=" in line:
+                k, v = line.strip().split("=", 1)
+                os.environ[k.strip()] = v.strip().strip('"').strip("'")
+
 # Import local backend modules & DB
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from app.models.database import SessionLocal, ScanRecord, VoiceCallLog, FarmProfile
