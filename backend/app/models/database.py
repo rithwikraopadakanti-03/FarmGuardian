@@ -22,7 +22,7 @@ class FarmProfile(Base):
     longitude = Column(Float, default=80.4365)
     primary_crop = Column(String, default="Tomato & Potato")
     farm_size_acres = Column(Float, default=4.5)
-    phone_number = Column(String, default="+91 9876543210")
+    phone_number = Column(String, default="+91 8121985059")
 
 class ScanRecord(Base):
     __tablename__ = "scan_records"
@@ -63,7 +63,7 @@ class VoiceCallLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     scan_id = Column(Integer, ForeignKey("scan_records.id"), nullable=True)
-    farmer_phone = Column(String, default="+91 9876543210")
+    farmer_phone = Column(String, default="+91 8121985059")
     call_status = Column(String, default="Completed")
     duration_seconds = Column(Integer, default=94)
     called_at = Column(DateTime, default=datetime.utcnow)

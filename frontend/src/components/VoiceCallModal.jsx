@@ -27,7 +27,7 @@ export default function VoiceCallModal({ isOpen, onClose, scanData, currentLang 
         day_2_plan: "Apply Copper Oxychloride spray tomorrow evening",
         estimated_savings_inr: 18500.0
       },
-      farmer_phone: "+91 9876543210"
+      farmer_phone: "+91 8121985059"
     };
 
     fetch('/api/voice/call', {
@@ -86,7 +86,7 @@ export default function VoiceCallModal({ isOpen, onClose, scanData, currentLang 
             </div>
             <div>
               <h3 className="text-lg font-bold text-white tracking-wide">{t.title}</h3>
-              <p className="text-xs text-emerald-400 font-medium">OmniDimension AI Direct Line • +91 9876543210</p>
+              <p className="text-xs text-emerald-400 font-medium">OmniDimension AI Direct Line • +91 8121985059</p>
             </div>
           </div>
 

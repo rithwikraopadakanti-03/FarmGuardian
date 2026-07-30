@@ -119,7 +119,7 @@ export default function FarmHistory() {
           ) : (
             <div className="bg-slate-900/80 p-4 rounded-2xl border border-white/10 space-y-2 col-span-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-emerald-400">📞 Ramesh Rao (+91 9876543210)</span>
+                <span className="font-bold text-emerald-400">📞 Ramesh Rao (+91 8121985059)</span>
                 <span className="text-slate-400 font-mono">78 seconds</span>
               </div>
               <p className="text-xs text-slate-200 leading-relaxed">

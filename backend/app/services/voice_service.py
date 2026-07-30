@@ -5,7 +5,7 @@ from datetime import datetime
 
 OMNIDIMENSION_API_KEY = os.getenv("OMNIDIMENSION_API_KEY", "")
 
-def initiate_omnidimension_voice_call(scan_data, farmer_phone="+91 9876543210"):
+def initiate_omnidimension_voice_call(scan_data, farmer_phone="+91 8121985059"):
     """
     Triggers OmniDimension AI Voice call to farmer.
     Sends full context (Disease, Severity, Weather, Best Spray Time, Recovery Days).

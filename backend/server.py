@@ -277,7 +277,7 @@ class FarmGuardianHandler(BaseHTTPRequestHandler):
             length = int(self.headers.get('Content-Length', 0))
             body = json.loads(self.rfile.read(length).decode('utf-8'))
             scan_data = body.get("scan_data", {})
-            farmer_phone = body.get("farmer_phone", "+91 9876543210")
+            farmer_phone = body.get("farmer_phone", "+91 8121985059")
 
             res = initiate_omnidimension_voice_call(scan_data, farmer_phone)
 
