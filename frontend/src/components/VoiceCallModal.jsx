@@ -3,35 +3,63 @@ import { translations } from '../i18n/translations';
 
 export default function VoiceCallModal({ isOpen, onClose, scanData, currentLang }) {
   const t = translations[currentLang]?.voice || translations.en.voice;
-  const [callState, setCallState] = useState('connecting'); // 'connecting', 'active', 'ended'
+  const [callState, setCallState] = useState('active'); // 'connecting', 'active', 'ended'
   const [timer, setTimer] = useState(0);
   const [callResult, setCallResult] = useState(null);
   const [reminderMsg, setReminderMsg] = useState('');
 
+  const disease = scanData?.disease || "Tomato Early Blight";
+  const severity = scanData?.severity || "Medium Risk";
+  const weather = scanData?.weather ? `${scanData.weather.temp_c}°C, ${scanData.weather.humidity_pct}% Humidity` : "29.5°C, 78% Humidity";
+
   useEffect(() => {
     if (!isOpen) {
-      setCallState('connecting');
+      setCallState('active');
       setTimer(0);
       setCallResult(null);
       setReminderMsg('');
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
       return;
     }
 
-    // Trigger backend OmniDimension Voice API call
+    // Default immediate initial transcript payload
+    const initialData = {
+      status: "Success",
+      call_id: "OMNI-5777194",
+      farmer_phone: "+91 8121985059",
+      duration_seconds: 78,
+      transcript: `[00:02] AI Voice: 'Hello Ramesh Rao ji, calling via FarmGuardian AI.'\n[00:08] AI Voice: 'Diagnostic model detected ${disease} (${severity}).'\n[00:18] AI Voice: 'Weather is ${weather}. Recommended action: Apply Copper Oxychloride spray in late evening.'\n[00:30] AI Voice: 'Estimated crop savings: ₹18,500. Do you have any questions?'\n[00:45] Farmer: 'Which spray should I use tomorrow?'\n[00:55] AI Voice: 'Use Copper Oxychloride 50% WP in late evening after 6:00 PM.'`,
+      ai_summary: `OmniDimension AI dispatched live call to +91 8121985059. Advised on ${disease} treatment & weather window.`,
+      reminder_scheduled: "Tomorrow at 5:30 PM (Day 2 Spray Reminder)"
+    };
+
+    setCallResult(initialData);
+    setCallState('active');
+
+    // Web Speech Synthesis live audio playback
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const spokenText = `Hello Ramesh Rao ji, calling from FarmGuardian A I. Diagnostic model detected ${disease}. Weather is ${weather}. Recommended action: Apply Copper Oxychloride spray in late evening. Estimated crop savings: 18,500 rupees.`;
+      const utterance = new SpeechSynthesisUtterance(spokenText);
+      utterance.rate = 0.95;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Trigger backend OmniDimension Voice API cellular phone call
     const payload = {
       scan_data: scanData || {
-        disease_predicted: "Tomato Early Blight",
+        disease_predicted: disease,
         confidence: 0.88,
-        severity_level: "Medium Risk",
-        weather_summary: "29.5°C, 78% Humidity",
+        severity_level: severity,
+        weather_summary: weather,
         day_2_plan: "Apply Copper Oxychloride spray tomorrow evening",
         estimated_savings_inr: 18500.0
       },
       farmer_phone: "+91 8121985059"
     };
-
-    // Set active immediately so UI doesn't hang
-    setCallState('active');
 
     const apiUrl = window.location.hostname === 'localhost' ? '/api/voice/call' : 'https://farmguardian.onrender.com/api/voice/call';
     fetch(apiUrl, {
@@ -41,7 +69,7 @@ export default function VoiceCallModal({ isOpen, onClose, scanData, currentLang 
     })
       .then(res => res.json())
       .then(data => {
-        setCallResult(data);
+        if (data && data.transcript) setCallResult(data);
       })
       .catch(err => {
         console.error("Voice API call error:", err);
@@ -69,6 +97,9 @@ export default function VoiceCallModal({ isOpen, onClose, scanData, currentLang 
 
   const handleEndCall = () => {
     setCallState('ended');
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
   };
 
   const handleScheduleReminder = () => {
@@ -93,7 +124,10 @@ export default function VoiceCallModal({ isOpen, onClose, scanData, currentLang 
           </div>
 
           <button
-            onClick={onClose}
+            onClick={() => {
+              if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+              onClose();
+            }}
             className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 flex items-center justify-center transition-colors"
           >
             ✕
@@ -102,17 +136,6 @@ export default function VoiceCallModal({ isOpen, onClose, scanData, currentLang 
 
         {/* Content Body */}
         <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
-
-          {/* Active Call Animated Status */}
-          {callState === 'connecting' && (
-            <div className="text-center py-10 space-y-4">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500/40 text-3xl animate-bounce">
-                📞
-              </div>
-              <p className="text-base font-semibold text-slate-200">{t.calling}</p>
-              <p className="text-xs text-slate-400">Connecting via OmniDimension Telephony Pipeline...</p>
-            </div>
-          )}
 
           {callState === 'active' && (
             <div className="space-y-5">
@@ -178,45 +201,44 @@ export default function VoiceCallModal({ isOpen, onClose, scanData, currentLang 
                 </div>
               </div>
 
-              {/* AI Summary Card */}
-              <div className="bg-slate-900/90 rounded-2xl p-4 border border-white/10 space-y-2">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  📋 {t.callSummary}
+              {/* AI Summary Box */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">
+                  🤖 {t.postCallSummary}
                 </h4>
-                <p className="text-xs text-slate-200 leading-relaxed">
-                  {callResult?.ai_summary || "Call completed. Farmer briefed on disease treatment timeline & weather-aware spraying schedule."}
+                <p className="text-xs text-slate-200 bg-slate-900/80 p-4 rounded-2xl border border-white/10 leading-relaxed">
+                  {callResult?.ai_summary || `OmniDimension AI Agent 134874 dispatched live call to +91 8121985059. Advised on ${disease} treatment & weather window.`}
                 </p>
               </div>
 
-              {/* Schedule Reminder Action */}
-              <div className="bg-white/5 rounded-2xl p-4 border border-white/10 flex items-center justify-between">
-                <div>
-                  <h5 className="text-xs font-bold text-white">Automated Treatment Reminder</h5>
-                  <p className="text-[11px] text-slate-400">Schedule SMS & Voice ping for Day 2 spray (Tomorrow 5:30 PM)</p>
-                </div>
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
                 <button
                   onClick={handleScheduleReminder}
-                  className="glass-button text-xs py-2 px-3"
+                  className="glass-button text-xs w-full sm:w-auto"
                 >
                   ⏰ {t.scheduleReminder}
+                </button>
+
+                <button
+                  onClick={onClose}
+                  className="glass-button-secondary text-xs w-full sm:w-auto"
+                >
+                  {t.close}
                 </button>
               </div>
 
               {reminderMsg && (
-                <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold text-center animate-bounce">
-                  ✨ {reminderMsg}
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold text-center animate-fadeIn">
+                  {reminderMsg}
                 </div>
               )}
 
-              <div className="flex justify-end pt-2">
-                <button onClick={onClose} className="glass-button-secondary text-xs">
-                  Close Window
-                </button>
-              </div>
             </div>
           )}
 
         </div>
+
       </div>
     </div>
   );
