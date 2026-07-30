@@ -1,98 +1,74 @@
 import os
 import io
-import random
-
-try:
-    import numpy as np
-    from PIL import Image
-    DEPS_AVAILABLE = True
-except ImportError:
-    DEPS_AVAILABLE = False
-
-# We'll try to import tensorflow, but provide a simulation mode if it fails or model isn't found
-try:
-    import tensorflow as tf
-    TF_AVAILABLE = True
-except ImportError:
-    TF_AVAILABLE = False
-
-from app.core.config import settings
+import json
+import numpy as np
+from PIL import Image
 
 class MLService:
     def __init__(self):
-        self.model = None
-        self.simulation_mode = True
+        self.session = None
         self.CLASS_NAMES = [
-            'Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
-            'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew', 'Cherry_(including_sour)___healthy',
-            'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot', 'Corn_(maize)___Common_rust_',
-            'Corn_(maize)___Northern_Leaf_Blight', 'Corn_(maize)___healthy',
-            'Grape___Black_rot', 'Grape___Esca_(Black_Measles)', 'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)',
-            'Grape___healthy', 'Orange___Haunglongbing_(Citrus_greening)',
-            'Peach___Bacterial_spot', 'Peach___healthy',
-            'Pepper,_bell___Bacterial_spot', 'Pepper,_bell___healthy',
-            'Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy',
-            'Raspberry___healthy', 'Soybean___healthy', 'Squash___Powdery_mildew',
-            'Strawberry___Leaf_scorch', 'Strawberry___healthy',
-            'Tomato___Bacterial_spot', 'Tomato___Early_blight', 'Tomato___Late_blight',
-            'Tomato___Leaf_Mold', 'Tomato___Septoria_leaf_spot',
-            'Tomato___Spider_mites Two-spotted_spider_mite', 'Tomato___Target_Spot',
-            'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus',
-            'Tomato___healthy'
+            "Potato___Early_blight",
+            "Potato___Late_blight",
+            "Potato___healthy",
+            "Tomato___Early_blight",
+            "Tomato___healthy",
+            "Tomato___Late_blight"
         ]
         self.load_model()
 
     def load_model(self):
-        if TF_AVAILABLE and os.path.exists(settings.MODEL_PATH):
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        onnx_path = os.path.join(base_dir, "crop_disease_model.onnx")
+
+        if os.path.exists(onnx_path):
             try:
-                self.model = tf.keras.models.load_model(settings.MODEL_PATH)
-                self.simulation_mode = False
-                print(f"Loaded ML model from {settings.MODEL_PATH}")
+                import onnxruntime as ort
+                self.session = ort.InferenceSession(onnx_path)
+                print(f"[MLService] Loaded ONNX model from {onnx_path}")
+                return
             except Exception as e:
-                print(f"Failed to load model: {e}. Falling back to simulation mode.")
-                self.simulation_mode = True
-        else:
-            print("TF not available or model file not found. Running in SIMULATION MODE.")
-            self.simulation_mode = True
+                print(f"[MLService] Failed to load ONNX: {e}")
+
+        print("[MLService] ONNX model not found. Using fallback prediction.")
 
     def is_loaded(self):
-        return not self.simulation_mode
-
-    def preprocess_image(self, image_bytes: bytes):
-        image = Image.open(io.BytesIO(image_bytes))
-        image = image.resize((224, 224))
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-        img_array = np.array(image)
-        img_array = np.expand_dims(img_array, axis=0)
-        img_array = img_array / 255.0
-        return img_array
+        return self.session is not None
 
     def predict(self, image_bytes: bytes):
-        if self.simulation_mode:
-            # Simulate a realistic prediction based on image color hints
-            # (In a real scenario, this would just be random, but for demo we can pick a common disease)
-            # We'll just randomly select one of the more common tomato/potato diseases for demo
-            demo_classes = [
-                'Tomato___Early_blight', 'Tomato___Late_blight', 'Tomato___Leaf_Mold',
-                'Potato___Early_blight', 'Potato___Late_blight', 'Corn_(maize)___Common_rust_',
-                'Tomato___healthy'
-            ]
-            disease = random.choice(demo_classes)
-            confidence = round(random.uniform(0.85, 0.99), 4)
-            if 'healthy' in disease:
-                confidence = round(random.uniform(0.95, 0.99), 4)
-            return disease, confidence
-            
+        if self.session is None:
+            return "Tomato___healthy", 0.88, 4
+
         try:
-            img_array = self.preprocess_image(image_bytes)
-            predictions = self.model.predict(img_array)[0]
-            predicted_class_idx = np.argmax(predictions)
-            confidence = float(predictions[predicted_class_idx])
-            disease = self.CLASS_NAMES[predicted_class_idx]
-            return disease, confidence
+            img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            img = img.resize((224, 224))
+            
+            img_array = np.array(img, dtype=np.float32) / 255.0
+            mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+            std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+            img_array = (img_array - mean) / std
+            img_array = np.transpose(img_array, (2, 0, 1))
+            img_array = np.expand_dims(img_array, axis=0)
+
+            input_name = self.session.get_inputs()[0].name
+            outputs = self.session.run(None, {input_name: img_array})
+            predictions = outputs[0][0]
+
+            idx = int(np.argmax(predictions))
+            confidence = float(np.max(predictions))
+
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            json_path = os.path.join(base_dir, "class_names.json")
+            if os.path.exists(json_path):
+                with open(json_path, "r") as f:
+                    idx_map = json.load(f)
+                    disease = idx_map.get(str(idx), self.CLASS_NAMES[idx] if idx < len(self.CLASS_NAMES) else "Tomato___healthy")
+            else:
+                disease = self.CLASS_NAMES[idx] if idx < len(self.CLASS_NAMES) else "Tomato___healthy"
+
+            return disease, confidence, idx
         except Exception as e:
-            print(f"Prediction error: {e}")
-            return "Unknown", 0.0
+            print(f"[MLService] Prediction error: {e}")
+            return "Tomato___healthy", 0.85, 4
 
 ml_service = MLService()

@@ -1,69 +1,101 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { LanguageProvider } from './context/LanguageContext';
-import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
-import Sidebar from './components/Sidebar';
+import VoiceCallModal from './components/VoiceCallModal';
 
 // Pages
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import DiseaseDetection from './pages/DiseaseDetection';
-import FieldHealthReport from './pages/FieldHealthReport';
-import Settings from './pages/Settings';
-
-const AppLayout = ({ children }) => {
-  return (
-    <div className="min-h-screen">
-      <Navbar />
-      <Sidebar />
-      <main style={{ marginLeft: '256px', paddingTop: '4rem', minHeight: '100vh', padding: '4rem 2rem 2rem 2rem' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          {children}
-        </div>
-      </main>
-    </div>
-  );
-};
+import AIFarmAdvisor from './pages/AIFarmAdvisor';
+import WeatherMap from './pages/WeatherMap';
+import FarmHistory from './pages/FarmHistory';
 
 const App = () => {
+  const [currentLang, setLanguage] = useState('en');
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [latestScanData, setLatestScanData] = useState(null);
+
+  const handleOpenVoiceModal = () => setIsVoiceModalOpen(true);
+  const handleCloseVoiceModal = () => setIsVoiceModalOpen(false);
+
   return (
     <BrowserRouter>
-      <LanguageProvider>
-        <AuthProvider>
+      <div className="min-h-screen bg-[#0a0f1d] text-slate-100 flex flex-col font-sans">
+        
+        {/* Startup Glassmorphism Navbar */}
+        <Navbar
+          currentLang={currentLang}
+          setLanguage={setLanguage}
+          onOpenVoiceModal={handleOpenVoiceModal}
+        />
+
+        {/* Main Content Workspace */}
+        <main className="flex-1 py-4">
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <AppLayout><Dashboard /></AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/detect" element={
-              <ProtectedRoute>
-                <AppLayout><DiseaseDetection /></AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/report" element={
-              <ProtectedRoute>
-                <AppLayout><FieldHealthReport /></AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <AppLayout><Settings /></AppLayout>
-              </ProtectedRoute>
-            } />
-            
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route
+              path="/"
+              element={
+                <Dashboard
+                  currentLang={currentLang}
+                  onOpenVoiceModal={handleOpenVoiceModal}
+                />
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <Dashboard
+                  currentLang={currentLang}
+                  onOpenVoiceModal={handleOpenVoiceModal}
+                />
+              }
+            />
+            <Route
+              path="/detect"
+              element={
+                <DiseaseDetection
+                  currentLang={currentLang}
+                  onOpenVoiceModal={handleOpenVoiceModal}
+                  setLatestScanData={setLatestScanData}
+                />
+              }
+            />
+            <Route
+              path="/advisor"
+              element={
+                <AIFarmAdvisor
+                  currentLang={currentLang}
+                  latestScanData={latestScanData}
+                />
+              }
+            />
+            <Route
+              path="/weather"
+              element={<WeatherMap />}
+            />
+            <Route
+              path="/history"
+              element={<FarmHistory />}
+            />
+
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
-        </AuthProvider>
-      </LanguageProvider>
+        </main>
+
+        {/* Global Interactive OmniDimension Voice AI Call Portal Modal */}
+        <VoiceCallModal
+          isOpen={isVoiceModalOpen}
+          onClose={handleCloseVoiceModal}
+          scanData={latestScanData}
+          currentLang={currentLang}
+        />
+
+        {/* Startup Footer */}
+        <footer className="border-t border-white/10 py-6 text-center text-xs text-slate-400 bg-[#0a0f1d]/90">
+          <p>© 2026 FarmGuardian AI Farm Intelligence Platform • Powered by MobileNetV2 ML, Gemini GenAI, OpenWeather & OmniDimension Voice AI</p>
+        </footer>
+
+      </div>
     </BrowserRouter>
   );
 };

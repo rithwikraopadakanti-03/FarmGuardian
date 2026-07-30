@@ -1,45 +1,75 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+import os
 from datetime import datetime
-from app.core.config import settings
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Text, ForeignKey, Boolean
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
 
-engine = create_engine(
-    settings.DATABASE_URL, connect_args={"check_same_thread": False}
-)
+DB_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DB_PATH = os.path.join(DB_DIR, "farmguardian.db")
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{DB_PATH}"
+
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 Base = declarative_base()
 
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+class FarmProfile(Base):
+    __tablename__ = "farm_profiles"
 
-class Scan(Base):
-    __tablename__ = "scans"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, index=True) # Optional, can be null for guests if needed, or we link to guest id
-    image_path = Column(String)
-    disease = Column(String)
-    confidence = Column(Float)
-    severity = Column(String)
-    severity_score = Column(Float)
-    yield_loss = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    farmer_name = Column(String, default="Ramesh Rao")
+    location_name = Column(String, default="Guntur, Andhra Pradesh")
+    latitude = Column(Float, default=16.3067)
+    longitude = Column(Float, default=80.4365)
+    primary_crop = Column(String, default="Tomato & Potato")
+    farm_size_acres = Column(Float, default=4.5)
+    phone_number = Column(String, default="+91 9876543210")
 
-class Report(Base):
-    __tablename__ = "reports"
+class ScanRecord(Base):
+    __tablename__ = "scan_records"
+
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, index=True)
-    health_score = Column(Float)
-    total_images = Column(Integer)
-    diseases_found = Column(String) # JSON string
-    pdf_path = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    crop_type = Column(String, default="Tomato")
+    disease_predicted = Column(String, nullable=False)
+    confidence = Column(Float, nullable=False)
+    severity_level = Column(String, default="Medium")
+    affected_area_pct = Column(Float, default=25.0)
+    image_filename = Column(String, nullable=True)
+    scanned_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Weather context at scan time
+    temperature_c = Column(Float, default=29.5)
+    humidity_pct = Column(Float, default=78.0)
+    rainfall_mm = Column(Float, default=12.4)
+    spraying_risk = Column(String, default="Medium Risk")
+
+    # Financial & Yield predictions
+    yield_loss_pct = Column(Float, default=30.0)
+    recovery_probability_pct = Column(Float, default=85.0)
+    estimated_cost_inr = Column(Float, default=1850.0)
+    estimated_savings_inr = Column(Float, default=14500.0)
+
+    # Treatment Timeline & Details (JSON strings)
+    day_1_plan = Column(Text, default="Remove severely infected lower leaves & isolate healthy rows.")
+    day_2_plan = Column(Text, default="Apply Copper Oxychloride 50% WP spray (2.5g/L water) in late evening.")
+    day_3_plan = Column(Text, default="Inspect leaf undersides for fungal sporulation & ensure field drainage.")
+    day_4_plan = Column(Text, default="Foliar application of Neem oil extract (3ml/L) to boost immunity.")
+    day_5_plan = Column(Text, default="Final recovery evaluation & schedule bi-weekly preventive spray.")
+
+    voice_called = Column(Boolean, default=False)
+    call_summary = Column(Text, nullable=True)
+
+class VoiceCallLog(Base):
+    __tablename__ = "voice_call_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    scan_id = Column(Integer, ForeignKey("scan_records.id"), nullable=True)
+    farmer_phone = Column(String, default="+91 9876543210")
+    call_status = Column(String, default="Completed")
+    duration_seconds = Column(Integer, default=94)
+    called_at = Column(DateTime, default=datetime.utcnow)
+    transcript = Column(Text, nullable=False)
+    ai_summary = Column(Text, nullable=False)
+    reminder_scheduled = Column(String, nullable=True)
 
 def get_db():
     db = SessionLocal()
@@ -47,3 +77,5 @@ def get_db():
         yield db
     finally:
         db.close()
+
+Base.metadata.create_all(bind=engine)
