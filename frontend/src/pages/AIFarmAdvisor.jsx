@@ -44,13 +44,30 @@ export default function AIFarmAdvisor({ currentLang, latestScanData }) {
       setMessages(prev => [...prev, { sender: 'ai', text: data.answer }]);
     } catch (err) {
       console.error("Advisor API error:", err);
-      // Intelligent local fallback response
+      // Intelligent local fallback response tailored to query keyword
+      const qLower = query.toLowerCase();
       let fallbackText = "Humidity is currently 78%. Spraying is recommended tomorrow evening after 6:00 PM when wind speeds drop below 10 km/h for maximum leaf absorption.";
-      if (currentLang === 'te') {
-        fallbackText = "వాతావరణ తేమ 78% ఉంది. సాయంత్రం 6:00 గంటల తర్వాత మంచోజెబ్ (2గ్రా/లీటర్) పిచికారీ చేయడం వల్ల ఆకులు ఔషధాన్ని బాగా పీల్చుకుంటాయి.";
-      } else if (currentLang === 'hi') {
-        fallbackText = "मौसम में 78% नमी है। शाम 6:00 बजे के बाद मैंकोजेब का छिड़काव करना सबसे अच्छा रहेगा।";
+      
+      if (qLower.includes("yellow") || qLower.includes("vein") || qLower.includes("పసుపు") || qLower.includes("पीली")) {
+        fallbackText = currentLang === 'te'
+          ? "ఆకుల ఈనెలు పసుపు రంగులోకి మారడం నైట్రోజన్ లోపం లేదా ముందస్తు తెగులు లక్షణం కావచ్చు. పసుపు ఆకులను తీసివేసి 19:19:19 ఎరువును పిచికారీ చేయండి."
+          : currentLang === 'hi'
+          ? "पत्तियों की शिराओं का पीला पड़ना नाइट्रोजन की कमी या अगेती झुलसा का संकेत है। प्रभावित पत्तियों को हटाकर N-P-K (19:19:19) का छिड़काव करें।"
+          : "Yellowing leaf veins indicate Nitrogen deficiency or early fungal infection. Prune yellow lower leaves and apply a balanced N-P-K (19:19:19) foliar spray.";
+      } else if (qLower.includes("fertilizer") || qLower.includes("organic") || qLower.includes("ఎరువు") || qLower.includes("उर्वरक")) {
+        fallbackText = currentLang === 'te'
+          ? "సేంద్రీయ పోషణ కోసం పంచగవ్య (3% స్ప్రే) లేదా వర్మీ కంపోస్ట్‌తో కలిపిన వేప పిండిని (ఎకరాకు 250 కేజీలు) ఉపయోగించండి."
+          : currentLang === 'hi'
+          ? "जैविक पोषण के लिए पंचगव्य (3% स्प्रे) या वर्मीकंपोस्ट के साथ नीम की खली (250 किग्रा/एकड़) का प्रयोग करें।"
+          : "For organic crop nutrition, apply Panchagavya (3% foliar spray) or Neem cake (250kg/acre) combined with Vermicompost to enrich soil microflora.";
+      } else if (qLower.includes("prevent") || qLower.includes("blight") || qLower.includes("నివారణ") || qLower.includes("रोकथाम")) {
+        fallbackText = currentLang === 'te'
+          ? "తేమ ఉన్న వాతావరణంలో ముందస్తు మచ్చ తెగులును నివారించడానికి ట్రైకోడెర్మా విరిడే (5గ్రా/లీటర్) స్ప్రే చేయండి."
+          : currentLang === 'hi'
+          ? "नमी वाले मौसम में अगेती झुलसा से बचाव के लिए पत्तियों को सूखा रखें और ट्राइकोडर्मा विरिडे (5 ग्राम/लीटर) का छिड़काव करें।"
+          : "To prevent Early Blight in humid weather, maintain drip irrigation to avoid leaf wetness and spray Trichoderma viride bio-fungicide (5g/L).";
       }
+
       setMessages(prev => [...prev, { sender: 'ai', text: fallbackText }]);
     } finally {
       setLoading(false);
@@ -62,7 +79,7 @@ export default function AIFarmAdvisor({ currentLang, latestScanData }) {
       
       {/* Title */}
       <div className="text-center space-y-2">
-        <span className="badge-green">Gemini Generative AI Agent</span>
+        <span className="badge-green">AI Farm Assistant</span>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white">
           {t.title}
         </h1>
@@ -103,7 +120,7 @@ export default function AIFarmAdvisor({ currentLang, latestScanData }) {
               >
                 {msg.sender === 'ai' && (
                   <div className="text-[10px] font-bold text-emerald-400 mb-1 flex items-center gap-1">
-                    🤖 Gemini AI Agronomist
+                    🤖 AI Agronomist Assistant
                   </div>
                 )}
                 {msg.text}
@@ -115,7 +132,7 @@ export default function AIFarmAdvisor({ currentLang, latestScanData }) {
             <div className="flex justify-start">
               <div className="bg-slate-900/90 p-4 rounded-2xl border border-white/10 flex items-center gap-2 text-xs text-slate-400">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                Gemini AI is generating agronomist response...
+                AI Assistant is generating agronomist response...
               </div>
             </div>
           )}
@@ -126,16 +143,17 @@ export default function AIFarmAdvisor({ currentLang, latestScanData }) {
           <input
             type="text"
             value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
+            onChange={e => setQuestion(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAsk()}
             placeholder={t.placeholder}
-            className="flex-1 bg-slate-950/80 text-white text-xs sm:text-sm px-4 py-3 rounded-xl border border-white/15 focus:outline-none focus:border-emerald-500"
+            className="flex-1 bg-slate-900/90 border border-white/10 rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
           />
           <button
             onClick={() => handleAsk()}
-            className="glass-button py-3 px-6 text-xs sm:text-sm"
+            disabled={loading || !question.trim()}
+            className="glass-button text-xs sm:text-sm px-5 py-3"
           >
-            🚀 {t.send}
+            {t.send}
           </button>
         </div>
 

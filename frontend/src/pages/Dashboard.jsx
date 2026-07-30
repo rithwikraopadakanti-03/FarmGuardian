@@ -54,7 +54,7 @@ export default function Dashboard({ currentLang, onOpenVoiceModal }) {
             {t.welcome}
           </h1>
           <p className="text-sm text-slate-300 max-w-xl mt-1">
-            Real-time MobileNetV2 ML Diagnostics, OpenWeather Spraying Risk Alerts, and Gemini Agronomist Planning.
+            Real-time AI Diagnostics, OpenWeather Spraying Risk Alerts, and Agronomist Planning.
           </p>
         </div>
 

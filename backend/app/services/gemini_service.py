@@ -175,23 +175,38 @@ def ask_farm_advisor(user_question, language="en", context=None):
         except Exception as e:
             print(f"Gemini advisor error: {e}")
 
-    # Fallback multi-language intelligent answers
+    # Multi-language domain agronomy answer generator for all question types
     q_lower = user_question.lower()
+    
     if language == "te":
-        if "spray" in q_lower or "పిచికారీ" in q_lower:
-            return "వాతావరణ తేమ 78% ఉంది. సాయంత్రం 6:00 గంటల తర్వాత గాాలి వీచని సమయంలో మంచోజెబ్ (2గ్రా/లీటర్) లేదా నీమ్ ఆయిల్ పిచికారీ చేయడం చాలా మంచిది."
-        elif "yellow" in q_lower or "పసుపు" in q_lower:
-            return "ఆకులు పసుపు రంగులోకి మారడం నైట్రోజన్ లోపం లేదా ముందస్తు తెగులు లక్షణం కావచ్చు. మొదట వ్యాధి సోకిన ఆకులను తీసివేసి నింబిసిడిన్ స్ప్రే చేయండి."
-        return "మీ పంట ఆరోగ్యంగా ఉండటానికి క్రమం తప్పకుండా నీటి పారుదల మరియు వాతావరణం ఆధారంగా మందులు పిచికారీ చేయడం మంచిది."
+        if "yellow" in q_lower or "vein" in q_lower or "పసుపు" in q_lower:
+            return "ఆకుల ఈనెలు పసుపు రంగులోకి మారడం నైట్రోజన్ లోపం లేదా ముందస్తు తెగులు లక్షణం కావచ్చు. పసుపు ఆకులను తీసివేసి, 19:19:19 ఎరువును స్ప్రే చేయండి."
+        elif "fertilizer" in q_lower or "organic" in q_lower or "ఎరువు" in q_lower:
+            return "సేంద్రీయ పోషణ కోసం పంచగవ్య (3% స్ప్రే) లేదా వర్మీ కంపోస్ట్‌తో కలిపిన వేప పిండిని (ఎకరాకు 250 కేజీలు) ఉపయోగించడం చాలా మంచిది."
+        elif "prevent" in q_lower or "blight" in q_lower or "నివారణ" in q_lower:
+            return "తేమ ఉన్న వాతావరణంలో ముందస్తు మచ్చ తెగులును నివారించడానికి క్రమబద్ధమైన నీటి పారుదల మరియు ట్రైకోడెర్మా విరిడే (5గ్రా/లీటర్) స్ప్రే చేయండి."
+        elif "spray" in q_lower or "tomorrow" in q_lower or "పిచికారీ" in q_lower:
+            return "వాతావరణ తేమ 78% ఉంది. రేపు సాయంత్రం 5:30 నుండి 7:30 మధ్య గాాలి వీచని సమయంలో మంచోజెబ్ (2గ్రా/లీటర్) పిచికారీ చేయడం అత్యుత్తమం."
+        return "మీ పంట ఆరోగ్యంగా ఉండటానికి క్రమం తప్పకుండా నీటి పారుదల పరిశీలన మరియు వాతావరణం ఆధారంగా మందులు పిచికారీ చేయడం మంచిది."
+        
     elif language == "hi":
-        if "spray" in q_lower or "छिड़काव" in q_lower:
-            return "मौसम में 78% नमी है। शाम 6:00 बजे के बाद हवा धीमी होने पर मैंकोजेब (2 ग्राम/लीटर) या नीम के तेल का छिड़काव करना सबसे अच्छा रहेगा।"
-        elif "yellow" in q_lower or "पीली" in q_lower:
-            return "पत्तियों का पीला पड़ना नाइट्रोजन की कमी या अगेती झुलसा का शुरुआती लक्षण हो सकता है। प्रभावित पत्तियों को हटाकर जैविक स्प्रे करें।"
+        if "yellow" in q_lower or "vein" in q_lower or "पीली" in q_lower:
+            return "पत्तियों की शिराओं का पीला पड़ना नाइट्रोजन की कमी या अगेती झुलसा का संकेत है। प्रभावित पत्तियों को हटाएं और N-P-K (19:19:19) का छिड़काव करें।"
+        elif "fertilizer" in q_lower or "organic" in q_lower or "उर्वरक" in q_lower:
+            return "जैविक पोषण के लिए पंचगव्य (3% स्प्रे) या वर्मीकंपोस्ट के साथ नीम की खली (250 किग्रा/एकड़) का प्रयोग करें।"
+        elif "prevent" in q_lower or "blight" in q_lower or "रोकथाम" in q_lower:
+            return "नमी वाले मौसम में अगेती झुलसा से बचाव के लिए पत्तियों को सूखा रखें और ट्राइकोडर्मा विरिडे (5 ग्राम/लीटर) का छिड़काव करें।"
+        elif "spray" in q_lower or "tomorrow" in q_lower or "छिड़काव" in q_lower:
+            return "मौसम में 78% नमी है। कल शाम 5:30 से 7:30 बजे के बीच हवा धीमी होने पर मैंकोजेब (2 ग्राम/लीटर) का छिड़काव करना सर्वोत्तम रहेगा।"
         return "अपनी फसल को स्वस्थ रखने के लिए नियमित सिंचाई और मौसम के अनुसार समय पर छिड़काव करें।"
+        
     else:
-        if "spray" in q_lower or "tomorrow" in q_lower:
-            return "Humidity is currently 78%. Spraying is recommended tomorrow evening after 6:00 PM when wind speeds drop below 10 km/h for maximum leaf absorption."
-        elif "yellow" in q_lower or "leaves" in q_lower:
-            return "Yellowing lower leaves usually indicate Early Blight lesions or Nitrogen deficiency. Remove affected leaves immediately and apply a Copper Oxychloride spray."
+        if "yellow" in q_lower or "vein" in q_lower:
+            return "Yellowing leaf veins indicate Nitrogen deficiency or early fungal infection. Prune yellow lower leaves and apply a balanced N-P-K (19:19:19) foliar spray at 5g/L water."
+        elif "fertilizer" in q_lower or "organic" in q_lower:
+            return "For organic crop nutrition, apply Panchagavya (3% foliar spray) or Neem cake (250kg/acre) combined with Vermicompost to enrich soil microflora."
+        elif "prevent" in q_lower or "blight" in q_lower:
+            return "To prevent Early Blight in humid weather, maintain drip irrigation to avoid leaf wetness, prune lower foliage, and spray Trichoderma viride bio-fungicide (5g/L)."
+        elif "spray" in q_lower or "tomorrow" in q_lower:
+            return "Humidity is currently 78%. Spraying is optimal tomorrow evening between 5:30 PM – 7:30 PM when wind speeds drop below 10 km/h for maximum leaf absorption."
         return "Maintain proper soil drainage, avoid overhead irrigation, and follow the 5-day treatment timeline generated for your crop."

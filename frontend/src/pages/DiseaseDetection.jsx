@@ -136,7 +136,7 @@ export default function DiseaseDetection({ currentLang, onOpenVoiceModal, setLat
                 {t.analyzing}
               </span>
             ) : (
-              <span>⚡ Execute MobileNetV2 & Gemini Diagnostic Pipeline</span>
+              <span>⚡ Execute AI Crop Diagnostic Engine</span>
             )}
           </button>
         </div>
@@ -147,16 +147,16 @@ export default function DiseaseDetection({ currentLang, onOpenVoiceModal, setLat
       {result && (
         <div className="space-y-8 animate-fadeIn">
           
-          {/* Top Result Banner: MobileNetV2 ML Output & Weather Warning */}
+          {/* Top Result Banner: ML Output & Weather Warning */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* MobileNetV2 Card */}
+            {/* ML Output Card */}
             <div className="glass-panel p-6 lg:col-span-2 space-y-5 border-emerald-500/40 relative overflow-hidden">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                   🧠 {t.mlTitle}
                 </span>
-                <span className="badge-green">MobileNetV2 Engine</span>
+                <span className="badge-green">AI Neural Engine</span>
               </div>
 
               <div className="space-y-1">
