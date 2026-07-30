@@ -2,13 +2,14 @@ import os
 import json
 import requests
 
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 def generate_treatment_and_reasoning(disease_name, confidence, weather_info, crop_type="Tomato"):
     """
-    Uses Gemini Generative AI to generate structured 5-Day Treatment Plan,
-    Yield Loss, Financial Savings, and Weather-aware Spraying Advice.
-    Gemini NEVER classifies the disease; it reasons on MobileNetV2's prediction.
+    Generates structured 5-Day Treatment Plan, Yield Loss, Financial Savings,
+    and Weather-aware Spraying Advice using OpenAI API (or Gemini API fallback).
+    AI NEVER classifies the disease; it reasons on MobileNetV2's prediction.
     """
     prompt = f"""
     Act as a World-Class Agricultural Scientist & AI Agronomist.
@@ -33,6 +34,30 @@ def generate_treatment_and_reasoning(disease_name, confidence, weather_info, cro
     14. weather_advice: Contextual recommendation combining disease & weather
     """
 
+    # 1. Try OpenAI API
+    if OPENAI_API_KEY:
+        try:
+            url = "https://api.openai.com/v1/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {OPENAI_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": "gpt-4o-mini",
+                "messages": [
+                    {"role": "system", "content": "You are a world-class AI Agronomist providing JSON output."},
+                    {"role": "user", "content": prompt}
+                ],
+                "response_format": {"type": "json_object"}
+            }
+            res = requests.post(url, headers=headers, json=payload, timeout=8)
+            if res.status_code == 200:
+                text_out = res.json()["choices"][0]["message"]["content"]
+                return json.loads(text_out)
+        except Exception as e:
+            print(f"OpenAI API error: {e}")
+
+    # 2. Try Gemini API
     if GEMINI_API_KEY:
         try:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
@@ -46,9 +71,9 @@ def generate_treatment_and_reasoning(disease_name, confidence, weather_info, cro
                 text_out = res.json()["candidates"][0]["content"]["parts"][0]["text"]
                 return json.loads(text_out)
         except Exception as e:
-            print(f"Gemini API warning: {e}. Falling back to structured agronomy reasoning.")
+            print(f"Gemini API error: {e}")
 
-    # High-quality fallback domain agronomy reasoning generator
+    # 3. Domain Agronomy Fallback Generator
     if "healthy" in disease_name.lower():
         return {
             "day_1_plan": "Routine leaf inspection & maintain standard drip irrigation schedule.",
@@ -83,7 +108,7 @@ def generate_treatment_and_reasoning(disease_name, confidence, weather_info, cro
             "expected_savings_inr": 18500.0,
             "weather_advice": f"Humidity is high ({weather_info.get('humidity_pct', 78)}%). Spray in late evening after 6:00 PM to prevent wash-off."
         }
-    else:  # Late blight or general blight
+    else:  # Late blight
         return {
             "day_1_plan": "Immediately isolate affected plant clusters and cut off water-soaked leaves.",
             "day_2_plan": "Apply systemic fungicide Metalaxyl 8% + Mancozeb 64% WP (2g/L water).",
@@ -103,7 +128,7 @@ def generate_treatment_and_reasoning(disease_name, confidence, weather_info, cro
 
 def ask_farm_advisor(user_question, language="en", context=None):
     """
-    Answers farmer questions contextually using Gemini Generative AI.
+    Answers farmer questions contextually using OpenAI API (or Gemini API fallback).
     Integrates crop, disease, weather, location, and language (EN, TE, HI).
     """
     lang_name = "Telugu (తెలుగు)" if language == "te" else "Hindi (हिन्दी)" if language == "hi" else "English"
@@ -119,6 +144,26 @@ def ask_farm_advisor(user_question, language="en", context=None):
     
     Respond concisely, clearly, and practical for field application in {lang_name}.
     """
+
+    if OPENAI_API_KEY:
+        try:
+            url = "https://api.openai.com/v1/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {OPENAI_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": "gpt-4o-mini",
+                "messages": [
+                    {"role": "system", "content": f"You are an expert AI Agronomist assisting in {lang_name}."},
+                    {"role": "user", "content": prompt}
+                ]
+            }
+            res = requests.post(url, headers=headers, json=payload, timeout=6)
+            if res.status_code == 200:
+                return res.json()["choices"][0]["message"]["content"]
+        except Exception as e:
+            print(f"OpenAI advisor error: {e}")
 
     if GEMINI_API_KEY:
         try:
