@@ -28,7 +28,8 @@ export default function AIFarmAdvisor({ currentLang, latestScanData }) {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/advisor', {
+      const apiUrl = window.location.hostname === 'localhost' ? '/api/advisor' : 'https://farmguardian.onrender.com/api/advisor';
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

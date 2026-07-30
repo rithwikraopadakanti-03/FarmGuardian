@@ -17,7 +17,8 @@ export default function Dashboard({ currentLang, onOpenVoiceModal }) {
       .catch(err => console.error("Weather fetch error:", err));
 
     // Fetch history from API
-    fetch('/api/history')
+    const apiUrl = window.location.hostname === 'localhost' ? '/api/history' : 'https://farmguardian.onrender.com/api/history';
+    fetch(apiUrl)
       .then(res => res.json())
       .then(data => setHistory(data))
       .catch(err => console.error("History fetch error:", err));

@@ -30,7 +30,8 @@ export default function VoiceCallModal({ isOpen, onClose, scanData, currentLang 
       farmer_phone: "+91 8121985059"
     };
 
-    fetch('/api/voice/call', {
+    const apiUrl = window.location.hostname === 'localhost' ? '/api/voice/call' : 'https://farmguardian.onrender.com/api/voice/call';
+    fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

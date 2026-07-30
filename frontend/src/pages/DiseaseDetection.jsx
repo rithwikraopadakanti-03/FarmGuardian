@@ -29,7 +29,8 @@ export default function DiseaseDetection({ currentLang, onOpenVoiceModal, setLat
     }
 
     try {
-      const res = await fetch('/api/predict', {
+      const apiUrl = window.location.hostname === 'localhost' ? '/api/predict' : 'https://farmguardian.onrender.com/api/predict';
+      const res = await fetch(apiUrl, {
         method: 'POST',
         body: formData
       });
