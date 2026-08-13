@@ -1,3 +1,10 @@
 onnxruntime
 Pillow
 numpy
+sqlalchemy
+requests
+fastapi
+uvicorn
+python-multipart
+openai
+google-generativeai
