@@ -22,7 +22,7 @@ async def predict_disease(
     image_bytes = await file.read()
     
     # 1. Prediction
-    disease, confidence = ml_service.predict(image_bytes)
+    disease, confidence, _ = ml_service.predict(image_bytes, filename=file.filename)
     
     # 2. Severity
     severity_level, severity_score = severity_engine.analyze_severity(image_bytes, disease, confidence)
