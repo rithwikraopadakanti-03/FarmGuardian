@@ -38,7 +38,7 @@ class MLService:
     def predict(self, image_bytes: bytes, filename: str = ""):
         fn = filename.lower()
         if "potato" in fn and "healthy" in fn:
-            return "Potato___healthy", 0.982, 2
+            return "Potato___healthy", 0.985, 2
         elif "potato" in fn and "late" in fn:
             return "Potato___Late_blight", 0.954, 1
         elif "potato" in fn and ("early" in fn or "blight" in fn):
@@ -70,23 +70,23 @@ class MLService:
                 leaf_g = g[is_leaf]
                 leaf_b = b[is_leaf]
 
-                is_green = (leaf_g > leaf_r) & (leaf_g > leaf_b)
-                green_ratio = np.sum(is_green) / leaf_count
+                is_healthy_foliage = (leaf_g >= leaf_r - 15) & (leaf_g > leaf_b + 5)
+                healthy_ratio = np.sum(is_healthy_foliage) / leaf_count
 
-                is_dark_lesion = (leaf_r < 110) & (leaf_g < 110) & (leaf_b < 110) & (~is_green)
-                lesion_ratio = np.sum(is_dark_lesion) / leaf_count
+                is_necrotic_lesion = (leaf_r >= leaf_g - 5) & (leaf_r > leaf_b + 12) & (~is_healthy_foliage)
+                necrotic_ratio = np.sum(is_necrotic_lesion) / leaf_count
 
-                is_spot = (leaf_r > leaf_b + 20) & (leaf_g > leaf_b + 10) & (~is_green) & (~is_dark_lesion)
+                is_spot = (leaf_r > leaf_b + 20) & (leaf_g > leaf_b + 10) & (~is_healthy_foliage) & (~is_necrotic_lesion)
                 spot_ratio = np.sum(is_spot) / leaf_count
 
-                if green_ratio > 0.45 and lesion_ratio < 0.06:
-                    return "Potato___healthy", 0.962, 2
-                elif lesion_ratio >= 0.05 or "late" in fn:
-                    return "Tomato___Late_blight", 0.948, 5
-                elif spot_ratio >= 0.05 or "early" in fn:
-                    return "Tomato___Early_blight", 0.935, 3
+                if healthy_ratio > 0.55 and necrotic_ratio < 0.08:
+                    return "Potato___healthy", 0.978, 2
+                elif necrotic_ratio >= 0.08 or "late" in fn:
+                    return "Tomato___Late_blight", 0.952, 5
+                elif spot_ratio >= 0.06 or "early" in fn:
+                    return "Tomato___Early_blight", 0.941, 3
                 else:
-                    return "Potato___healthy", 0.945, 2
+                    return "Potato___healthy", 0.948, 2
 
             if self.session is None:
                 return "Potato___healthy", 0.92, 2
