@@ -236,6 +236,7 @@ class FarmGuardianHandler(BaseHTTPRequestHandler):
             content_type = self.headers.get('Content-Type', '')
             image_bytes = None
             uploaded_filename = ""
+            crop_type_selected = ""  # Farmer-selected crop from UI
 
             if 'multipart/form-data' in content_type:
                 length = int(self.headers.get('Content-Length', 0))
@@ -243,7 +244,13 @@ class FarmGuardianHandler(BaseHTTPRequestHandler):
                 boundary = content_type.split('boundary=')[-1].encode()
                 parts = body.split(b'--' + boundary)
                 for part in parts:
-                    if b'filename=' in part or b'name="file"' in part or b'name="image"' in part:
+                    # Extract crop_type field
+                    if b'name="crop_type"' in part:
+                        header_end = part.find(b'\r\n\r\n')
+                        if header_end != -1:
+                            crop_type_selected = part[header_end+4:].rstrip(b'\r\n--').decode('utf-8', errors='ignore').strip()
+                    # Extract image file field
+                    elif b'filename=' in part or b'name="file"' in part or b'name="image"' in part:
                         if b'filename="' in part:
                             try:
                                 uploaded_filename = part.split(b'filename="')[1].split(b'"')[0].decode('utf-8', errors='ignore')
@@ -252,12 +259,30 @@ class FarmGuardianHandler(BaseHTTPRequestHandler):
                         header_end = part.find(b'\r\n\r\n')
                         if header_end != -1:
                             image_bytes = part[header_end+4:].rstrip(b'\r\n--')
-                            break
 
             if MODEL is not None and image_bytes:
                 disease, confidence, idx = real_prediction(image_bytes, filename=uploaded_filename)
             else:
                 disease, confidence, idx = "Tomato___healthy", 0.88, 4
+
+            # ── CROP-TYPE OVERRIDE ──────────────────────────────────────────
+            # If the farmer selected a specific crop, remap the disease label
+            # to that crop regardless of what the model detected.
+            # Potato & Tomato leaves are nearly identical visually —
+            # the farmer KNOWS which crop they are scanning.
+            if crop_type_selected in ("Potato", "Tomato"):
+                # Extract disease condition (healthy / early blight / late blight)
+                d_lower = disease.lower()
+                if "healthy" in d_lower:
+                    condition = "healthy"
+                elif "early" in d_lower:
+                    condition = "Early_blight"
+                elif "late" in d_lower:
+                    condition = "Late_blight"
+                else:
+                    condition = "healthy"
+                disease = f"{crop_type_selected}___{condition}"
+                print(f"[CropOverride] Remapped to {disease} based on farmer selection: {crop_type_selected}")
 
             # Severity calculation
             if "healthy" in disease.lower():

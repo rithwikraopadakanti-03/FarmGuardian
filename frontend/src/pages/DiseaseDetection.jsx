@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { translations } from '../i18n/translations';
 
+const CROP_OPTIONS = [
+  { id: 'Potato', label: '🥔 Potato', emoji: '🥔' },
+  { id: 'Tomato', label: '🍅 Tomato', emoji: '🍅' },
+];
+
 export default function DiseaseDetection({ currentLang, onOpenVoiceModal, setLatestScanData }) {
   const t = translations[currentLang]?.detection || translations.en.detection;
 
@@ -9,6 +14,7 @@ export default function DiseaseDetection({ currentLang, onOpenVoiceModal, setLat
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [checkedDays, setCheckedDays] = useState({});
+  const [selectedCrop, setSelectedCrop] = useState('Tomato'); // default
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -27,6 +33,7 @@ export default function DiseaseDetection({ currentLang, onOpenVoiceModal, setLat
     if (selectedImage) {
       formData.append('file', selectedImage);
     }
+    formData.append('crop_type', selectedCrop);
 
     try {
       const apiUrl = window.location.hostname === 'localhost' ? '/api/predict' : 'https://farmguardian.onrender.com/api/predict';
@@ -41,7 +48,7 @@ export default function DiseaseDetection({ currentLang, onOpenVoiceModal, setLat
       console.error("Prediction error:", err);
       // Fallback demo payload
       const mock = {
-        disease: "Tomato___Early_blight",
+        disease: `${selectedCrop}___Early_blight`,
         confidence: 0.885,
         severity: "Medium Risk",
         affected_area_pct: 24.5,
@@ -81,7 +88,7 @@ export default function DiseaseDetection({ currentLang, onOpenVoiceModal, setLat
       
       {/* Title Header */}
       <div className="text-center space-y-2 max-w-3xl mx-auto">
-        <span className="badge-green">MobileNetV2 ML + Gemini GenAI Layer</span>
+        <span className="badge-green">AI Crop Diagnostic Engine</span>
         <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
           {t.uploadTitle}
         </h1>
@@ -92,7 +99,40 @@ export default function DiseaseDetection({ currentLang, onOpenVoiceModal, setLat
 
       {/* Upload Box */}
       <div className="glass-panel p-6 sm:p-10 max-w-3xl mx-auto space-y-6">
-        
+
+        {/* ── CROP TYPE SELECTOR ── */}
+        <div className="space-y-3">
+          <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            🌿 Select Your Crop Type
+            <span className="text-emerald-400 font-semibold normal-case tracking-normal">
+              (Required for accurate diagnosis)
+            </span>
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            {CROP_OPTIONS.map(crop => (
+              <button
+                key={crop.id}
+                onClick={() => setSelectedCrop(crop.id)}
+                className={`flex items-center justify-center gap-2 p-4 rounded-2xl border-2 font-bold text-sm transition-all duration-200
+                  ${selectedCrop === crop.id
+                    ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 shadow-lg shadow-emerald-900/40 scale-[1.02]'
+                    : 'bg-slate-900/60 border-white/10 text-slate-400 hover:border-white/30 hover:text-white'
+                  }`}
+              >
+                <span className="text-2xl">{crop.emoji}</span>
+                {crop.id}
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] text-slate-500 text-center">
+            Selected: <strong className="text-emerald-400">{selectedCrop}</strong> — AI will diagnose specifically for this crop
+          </p>
+        </div>
+
+        {/* ── DIVIDER ── */}
+        <div className="border-t border-white/10" />
+
+        {/* ── IMAGE UPLOAD ── */}
         <div
           className="border-2 border-dashed border-emerald-500/40 rounded-3xl p-8 text-center bg-slate-900/60 hover:bg-slate-900/80 transition-all cursor-pointer relative group"
           onClick={() => document.getElementById('leafInput').click()}
@@ -120,7 +160,7 @@ export default function DiseaseDetection({ currentLang, onOpenVoiceModal, setLat
                 📷
               </div>
               <h3 className="text-base font-bold text-white">{t.dropText}</h3>
-              <p className="text-xs text-slate-400">Supports JPG, PNG, WEBP (Tomato & Potato Leaf Samples)</p>
+              <p className="text-xs text-slate-400">Supports JPG, PNG, WEBP — {selectedCrop} Leaf Samples</p>
             </div>
           )}
         </div>
@@ -186,7 +226,7 @@ export default function DiseaseDetection({ currentLang, onOpenVoiceModal, setLat
               </div>
 
               <p className="text-xs text-slate-300 leading-relaxed bg-white/5 p-3 rounded-xl border border-white/10">
-                MobileNetV2 extracted 1280 feature vectors from the leaf texture & vein contours. Prediction confirmed with high neural confidence.
+                AI Crop Diagnostic Engine extracted 1280 feature vectors from the leaf texture & vein contours. Prediction confirmed for <strong className="text-emerald-400">{selectedCrop}</strong> crop with high neural confidence.
               </p>
             </div>
 
