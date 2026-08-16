@@ -3,7 +3,7 @@ services:
     name: farmguardian
     runtime: python
     rootDir: backend
-    buildCommand: pip install sqlalchemy requests pillow numpy onnxruntime openai google-generativeai
+    buildCommand: pip install -r requirements.txt
     startCommand: python server.py
     envVars:
       - key: PORT

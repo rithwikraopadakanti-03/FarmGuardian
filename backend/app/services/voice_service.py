@@ -1,7 +1,12 @@
 import os
-import requests
 import json
 from datetime import datetime
+
+try:
+    import requests
+    _HAS_REQUESTS = True
+except ImportError:
+    _HAS_REQUESTS = False
 
 OMNIDIMENSION_API_KEY = os.getenv("OMNIDIMENSION_API_KEY", "0YkbCjLJc-LSJShpxCd32o3_F9lBlaAwhrlpzmZMYoQ")
 
@@ -26,7 +31,7 @@ def initiate_omnidimension_voice_call(scan_data, farmer_phone="+91 8121985059"):
         "to_number": clean_phone
     }
 
-    if OMNIDIMENSION_API_KEY:
+    if OMNIDIMENSION_API_KEY and _HAS_REQUESTS:
         try:
             url = "https://backend.omnidim.io/api/v1/calls/dispatch"
             headers = {

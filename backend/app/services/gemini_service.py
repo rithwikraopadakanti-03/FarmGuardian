@@ -1,6 +1,11 @@
 import os
 import json
-import requests
+
+try:
+    import requests
+    _HAS_REQUESTS = True
+except ImportError:
+    _HAS_REQUESTS = False
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
@@ -35,7 +40,7 @@ def generate_treatment_and_reasoning(disease_name, confidence, weather_info, cro
     """
 
     # 1. Try OpenAI API
-    if OPENAI_API_KEY:
+    if OPENAI_API_KEY and _HAS_REQUESTS:
         try:
             url = "https://api.openai.com/v1/chat/completions"
             headers = {
@@ -58,7 +63,7 @@ def generate_treatment_and_reasoning(disease_name, confidence, weather_info, cro
             print(f"OpenAI API error: {e}")
 
     # 2. Try Gemini API
-    if GEMINI_API_KEY:
+    if GEMINI_API_KEY and _HAS_REQUESTS:
         try:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
             headers = {"Content-Type": "application/json"}
@@ -145,7 +150,7 @@ def ask_farm_advisor(user_question, language="en", context=None):
     Respond concisely, clearly, and practical for field application in {lang_name}.
     """
 
-    if OPENAI_API_KEY:
+    if OPENAI_API_KEY and _HAS_REQUESTS:
         try:
             url = "https://api.openai.com/v1/chat/completions"
             headers = {
@@ -165,7 +170,7 @@ def ask_farm_advisor(user_question, language="en", context=None):
         except Exception as e:
             print(f"OpenAI advisor error: {e}")
 
-    if GEMINI_API_KEY:
+    if GEMINI_API_KEY and _HAS_REQUESTS:
         try:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
             payload = {"contents": [{"parts": [{"text": prompt}]}]}

@@ -1,7 +1,12 @@
 import os
-import requests
 import json
 import random
+
+try:
+    import requests
+    _HAS_REQUESTS = True
+except ImportError:
+    _HAS_REQUESTS = False
 
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY", "")
 
@@ -10,7 +15,7 @@ def get_weather_data(lat=16.3067, lon=80.4365):
     Fetches real-time weather & 5-day forecast from OpenWeather API.
     If API key is missing or network fails, returns realistic location-aware weather data.
     """
-    if OPENWEATHER_API_KEY:
+    if OPENWEATHER_API_KEY and _HAS_REQUESTS:
         try:
             url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={OPENWEATHER_API_KEY}&units=metric"
             resp = requests.get(url, timeout=5)
