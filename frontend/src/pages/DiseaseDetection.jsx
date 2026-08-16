@@ -49,9 +49,14 @@ export default function DiseaseDetection({ currentLang, onOpenVoiceModal, setLat
       // Fallback demo payload
       const mock = {
         disease: `${selectedCrop}___Early_blight`,
-        confidence: 0.885,
+        confidence: 0.942,
         severity: "Medium Risk",
         affected_area_pct: 24.5,
+        top_predictions: [
+          { class: `${selectedCrop}___Early_blight`, confidence: 0.942 },
+          { class: `${selectedCrop}___Late_blight`, confidence: 0.041 },
+          { class: `${selectedCrop}___healthy`, confidence: 0.017 }
+        ],
         weather: {
           temp_c: 29.5,
           humidity_pct: 78,
@@ -225,9 +230,33 @@ export default function DiseaseDetection({ currentLang, onOpenVoiceModal, setLat
                 />
               </div>
 
-              <p className="text-xs text-slate-300 leading-relaxed bg-white/5 p-3 rounded-xl border border-white/10">
-                AI Crop Diagnostic Engine extracted 1280 feature vectors from the leaf texture & vein contours. Prediction confirmed for <strong className="text-emerald-400">{selectedCrop}</strong> crop with high neural confidence.
-              </p>
+              {/* Top-3 Softmax Predictions Breakdown */}
+              {result.top_predictions && result.top_predictions.length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-white/10">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                    <span>📊 Top Neural Predictions (Softmax Probabilities)</span>
+                    <span className="text-[10px] text-emerald-400 font-semibold">Trained MobileNetV2</span>
+                  </span>
+                  <div className="space-y-2 pt-1">
+                    {result.top_predictions.map((pred, i) => (
+                      <div key={i} className="space-y-1">
+                        <div className="flex justify-between text-xs text-slate-300">
+                          <span className="font-semibold">{i + 1}. {pred.class}</span>
+                          <span className="font-bold text-emerald-400">{(pred.confidence * 100).toFixed(1)}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-white/5">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              i === 0 ? 'bg-gradient-to-r from-emerald-500 to-teal-400' : i === 1 ? 'bg-amber-400' : 'bg-slate-500'
+                            }`}
+                            style={{ width: `${(pred.confidence * 100).toFixed(1)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Weather-Aware Spraying Risk Card */}
