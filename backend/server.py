@@ -418,21 +418,12 @@ class FarmGuardianHandler(BaseHTTPRequestHandler):
                     {"class": f"{c_crop}___Late_blight", "confidence": 0.03}
                 ]
 
-            # ── CROP-TYPE OVERRIDE ──────────────────────────────────────────
-            # If the farmer selected a specific crop, remap the disease label
-            # to that crop regardless of what the model detected.
-            if crop_type_selected in ("Potato", "Tomato"):
-                d_lower = disease.lower()
-                if "healthy" in d_lower:
-                    condition = "healthy"
-                elif "early" in d_lower:
-                    condition = "Early_blight"
-                elif "late" in d_lower:
-                    condition = "Late_blight"
-                else:
-                    condition = "healthy"
-                disease = f"{crop_type_selected}___{condition}"
-                print(f"[CropOverride] Remapped to {disease} based on farmer selection: {crop_type_selected}")
+            # AI Neural Species Mismatch Detection
+            detected_species = "Potato" if "potato" in disease.lower() else "Tomato"
+            species_warning = ""
+            if crop_type_selected in ("Potato", "Tomato") and crop_type_selected != detected_species:
+                species_warning = f"Note: AI Engine detected a {detected_species} leaf (selected tab: {crop_type_selected})."
+                print(f"[SpeciesMismatch] {species_warning}")
 
             # Severity calculation
             if "healthy" in disease.lower():
@@ -493,6 +484,7 @@ class FarmGuardianHandler(BaseHTTPRequestHandler):
                 "predicted_index": idx,
                 "confidence": round(confidence, 4),
                 "top_predictions": top_preds,
+                "species_warning": species_warning,
                 "severity": severity,
                 "affected_area_pct": affected_area,
                 "weather": weather_data,

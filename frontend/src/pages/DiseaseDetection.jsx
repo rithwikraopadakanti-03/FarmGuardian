@@ -205,6 +205,13 @@ export default function DiseaseDetection({ currentLang, onOpenVoiceModal, setLat
                 <span className="badge-green">AI Neural Engine</span>
               </div>
 
+              {result.species_warning && (
+                <div className="bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs p-3 rounded-xl flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>{result.species_warning}</span>
+                </div>
+              )}
+
               <div className="space-y-1">
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
                   {result.disease}
