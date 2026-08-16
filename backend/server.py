@@ -61,8 +61,13 @@ def load_model():
 
 load_model()
 
-from PIL import Image, ImageFile
-ImageFile.LOAD_TRUNCATED_IMAGES = True
+try:
+    from PIL import Image, ImageFile
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
+    _HAS_PIL = True
+except Exception as e:
+    print(f"[PIL Import Notice] {e}")
+    _HAS_PIL = False
 
 def real_prediction(image_bytes, filename="", crop_type="Tomato"):
     """
