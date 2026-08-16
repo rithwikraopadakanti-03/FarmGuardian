@@ -9,6 +9,6 @@ services:
       - key: PORT
         value: 5000
       - key: OMNIDIMENSION_API_KEY
-        value: 0YkbCjLJc-LSJShpxCd32o3_F9lBlaAwhrlpzmZMYoQ
+        value: ScsPyhuOsEHBMRHbe1mJ3bme_eo1B_zllDnVo4WbxvI
       - key: OPENWEATHER_API_KEY
         value: ae40227be61af3c1fbc5a468e2f8b295

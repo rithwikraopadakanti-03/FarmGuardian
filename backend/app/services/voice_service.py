@@ -8,7 +8,7 @@ try:
 except ImportError:
     _HAS_REQUESTS = False
 
-OMNIDIMENSION_API_KEY = os.getenv("OMNIDIMENSION_API_KEY", "0YkbCjLJc-LSJShpxCd32o3_F9lBlaAwhrlpzmZMYoQ")
+OMNIDIMENSION_API_KEY = os.getenv("OMNIDIMENSION_API_KEY", "ScsPyhuOsEHBMRHbe1mJ3bme_eo1B_zllDnVo4WbxvI")
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER", "")
@@ -59,9 +59,9 @@ def initiate_omnidimension_voice_call(scan_data, farmer_phone="+91 8121985059"):
         except Exception as e:
             print(f"[Twilio Voice Exception] {e}")
 
-    # 2. Try OmniDimension API Outbound Voice Dispatch
+    # 2. Try OmniDimension API Outbound Voice Dispatch (Agent ID 145227 - Kisaan Krushi Voice Support Agent)
     call_payload = {
-        "agent_id": 134874,
+        "agent_id": 145227,
         "to_number": clean_phone
     }
 
